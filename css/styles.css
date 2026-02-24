@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #e2e8f0;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Estilo da Janela Safari */
+.safari-window {
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.safari-toolbar {
+    background: linear-gradient(to bottom, #f6f6f6, #ebebeb);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid #d1d1d1;
+    position: relative;
+}
+
+.safari-dots {
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.dot-red { background-color: #ff5f57; border: 0.5px solid #e0443e; }
+.dot-yellow { background-color: #febc2e; border: 0.5px solid #d89f24; }
+.dot-green { background-color: #28c840; border: 0.5px solid #1aab29; }
+
+.safari-address-bar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 1px solid #d1d1d1;
+    border-radius: 6px;
+    width: 40%;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #666;
+    padding: 0 10px;
+}
+
+.safari-address-bar i {
+    margin-right: 6px;
+    font-size: 10px;
+    color: #999;
+}
+
+/* Iframe e Overlay */
+.iframe-wrapper {
+    position: relative;
+    width: 100%;
+    height: 450px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.iframe-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    cursor: default;
+}
+
+.iframe-container iframe {
+    width: 125%;
+    height: 125%;
+    border: none;
+    transform: scale(0.8);
+    transform-origin: 0 0;
+}
+
+.btn-access {
+    background-color: #007aff; /* Azul Apple */
+    transition: all 0.2s ease;
+}
+
+.btn-access:hover {
+    background-color: #0056b3;
+    transform: scale(1.02);
+}
