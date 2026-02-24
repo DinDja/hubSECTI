@@ -1,10 +1,10 @@
 // data for each system portal
 const systems = [
     {
-        title: 'Portal Institucional',
+        title: 'Gestão de projetos',
         url: 'https://secti.netlify.app',
         domain: 'secti.netlify.app',
-        desc: 'Página de entrada da secretaria'
+        desc: 'Módulo de gestão de projetos'
     },
     {
         title: 'Gestão de Contratos',
