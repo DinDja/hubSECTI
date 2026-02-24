@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub de Sistemas - SECTI/BA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Estilo da Janela Safari */
+        .safari-window {
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .safari-toolbar {
+            background: linear-gradient(to bottom, #f6f6f6, #ebebeb);
+            height: 44px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid #d1d1d1;
+            position: relative;
+        }
+
+        .safari-dots {
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background-color: #ff5f57; border: 0.5px solid #e0443e; }
+        .dot-yellow { background-color: #febc2e; border: 0.5px solid #d89f24; }
+        .dot-green { background-color: #28c840; border: 0.5px solid #1aab29; }
+
+        .safari-address-bar {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            width: 40%;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+            padding: 0 10px;
+        }
+
+        .safari-address-bar i {
+            margin-right: 6px;
+            font-size: 10px;
+            color: #999;
+        }
+
+        /* Iframe e Overlay */
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .iframe-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            cursor: default;
+        }
+
+        .iframe-container iframe {
+            width: 125%;
+            height: 125%;
+            border: none;
+            transform: scale(0.8);
+            transform-origin: 0 0;
+        }
+
+        .btn-access {
+            background-color: #007aff; /* Azul Apple */
+            transition: all 0.2s ease;
+        }
+
+        .btn-access:hover {
+            background-color: #0056b3;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Principal -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-slate-900 rounded-lg">
+                    <i class="fas fa-layer-group text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-none">SECTI/BA</h1>
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Hub de Ecossistemas</span>
+                </div>
+            </div>
+            <a href="https://www.secti.ba.gov.br" target="_blank" class="text-xs font-semibold text-slate-600 hover:text-blue-600 transition-colors">
+                GOVERNO DA BAHIA <i class="fas fa-external-link-alt ml-1"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12 flex-grow">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Sistemas Operacionais</h2>
+            <p class="text-slate-500 mt-2 text-sm max-w-md mx-auto">Acesso rápido aos portais da Secretaria de Ciência, Tecnologia e Inovação.</p>
+        </div>
+
+        <!-- Grid de Janelas Safari -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            
+            <!-- Janela 1: Portal Institucional -->
+            <div class="flex flex-col">
+                <div class="safari-window">
+                    <div class="safari-toolbar">
+                        <div class="safari-dots">
+                            <div class="dot dot-red"></div>
+                            <div class="dot dot-yellow"></div>
+                            <div class="dot dot-green"></div>
+                        </div>
+                        <div class="safari-address-bar">
+                            <i class="fas fa-lock"></i> secti.netlify.app
+                        </div>
+                    </div>
+                    <div class="iframe-wrapper">
+                        <div class="iframe-overlay"></div>
+                        <div class="iframe-container h-full">
+                            <iframe src="https://secti.netlify.app" title="Preview Portal SECTI"></iframe>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-between items-center px-2">
+                    <div>
+                        <h3 class="font-bold text-slate-800">Portal Institucional</h3>
+                        <p class="text-xs text-slate-500">Página de entrada da secretaria</p>
+                    </div>
+                    <a href="https://secti.netlify.app" target="_blank" 
+                       class="btn-access text-white text-xs font-bold px-6 py-3 rounded-full shadow-lg shadow-blue-200 uppercase tracking-wider">
+                        Abrir Sistema
+                    </a>
+                </div>
+            </div>
+
+            <!-- Janela 2: Gestão de Contratos -->
+            <div class="flex flex-col">
+                <div class="safari-window">
+                    <div class="safari-toolbar">
+                        <div class="safari-dots">
+                            <div class="dot dot-red"></div>
+                            <div class="dot dot-yellow"></div>
+                            <div class="dot dot-green"></div>
+                        </div>
+                        <div class="safari-address-bar">
+                            <i class="fas fa-lock"></i> secti-contratos.netlify.app
+                        </div>
+                    </div>
+                    <div class="iframe-wrapper">
+                        <div class="iframe-overlay"></div>
+                        <div class="iframe-container h-full">
+                            <iframe src="https://secti-contratos.netlify.app/" title="Preview Contratos SECTI"></iframe>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-between items-center px-2">
+                    <div>
+                        <h3 class="font-bold text-slate-800">Gestão de Contratos</h3>
+                        <p class="text-xs text-slate-500">Módulo de administração contratual</p>
+                    </div>
+                    <a href="https://secti-contratos.netlify.app/" target="_blank" 
+                       class="btn-access text-white text-xs font-bold px-6 py-3 rounded-full shadow-lg shadow-blue-200 uppercase tracking-wider">
+                        Abrir Sistema
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center border-t border-slate-300 bg-slate-200/50">
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Secretaria de Ciência, Tecnologia e Inovação</p>
+        <div class="mt-4 flex justify-center space-x-4">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+            <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+        </div>
+    </footer>
+
+</body>
+</html>
