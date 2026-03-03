@@ -13,16 +13,23 @@ body {
     overflow: hidden;
     background: #fff;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.safari-window:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.25);
 }
 
 .safari-toolbar {
-    background: linear-gradient(to bottom, #f6f6f6, #ebebeb);
+    background: rgba(246, 246, 246, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     height: 44px;
     display: flex;
     align-items: center;
     padding: 0 16px;
-    border-bottom: 1px solid #d1d1d1;
+    border-bottom: 1px solid rgba(209, 209, 209, 0.5);
     position: relative;
 }
 
@@ -72,6 +79,7 @@ body {
     height: 450px;
     background: #fff;
     overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
 .iframe-overlay {
@@ -96,13 +104,39 @@ body {
 }
 
 .btn-access {
-    background-color: #007aff; /* Azul Apple */
-    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #007aff 0%, #0056b3 100%);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+}
+
+.btn-access::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
 }
 
 .btn-access:hover {
-    background-color: #0056b3;
-    transform: scale(1.02);
+    background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 122, 255, 0.6);
+}
+
+.btn-access:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-access:active {
+    transform: translateY(0) scale(0.98);
 }
 
 /* Loader Spinner */
@@ -126,4 +160,39 @@ body {
     100% {
         transform: rotate(360deg);
     }
+}
+
+/* Micro-interações e animações */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.safari-window:hover .safari-dots .dot {
+    animation: float 2s ease-in-out infinite;
+}
+
+.safari-window:hover .safari-dots .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.safari-window:hover .safari-dots .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* Melhoria de contraste e hierarquia visual */
+.safari-address-bar {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
+
+.safari-window:hover .safari-address-bar {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }

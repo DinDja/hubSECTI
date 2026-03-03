@@ -1,99 +1,122 @@
 // data for each system portal
 const systems = [
     {
-        title: 'Gestão de projetos',
+        title: 'Gestão de Projetos',
         url: 'https://secti.netlify.app',
         domain: 'secti.netlify.app',
-        desc: 'Módulo de gestão de projetos'
+        desc: 'Módulo de planejamento e acompanhamento de metas.'
     },
     {
         title: 'Gestão de Contratos',
         url: 'https://secti-contratos.netlify.app/',
         domain: 'secti-contratos.netlify.app',
-        desc: 'Módulo de administração contratual'
+        desc: 'Administração de documentos e vigências contratuais.'
     },
     {
         title: 'Painel Conecta Bahia',
         url: 'https://conectabahia.netlify.app/',
         domain: 'conectabahia.netlify.app',
-        desc: 'Consulte a disponibilidade de praças com Wi-Fi gratuito em todo o estado.'
+        desc: 'Mapa interativo de praças com Wi-Fi gratuito no estado.'
     }
 ];
-
-async function loadComponent(id, path) {
-    try {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`failed to load ${path}`);
-        document.getElementById(id).innerHTML = await res.text();
-    } catch (e) {
-        console.error(e);
-    }
-}
 
 function createSafariWindow({ title, url, domain, desc }) {
     const template = document.createElement('template');
 
-    // MOBILE-FIRST UPDATES APPLIED BELOW
+    // Design refinado com Glassmorphism e sombras suaves
     template.innerHTML = `
-    <article class="flex flex-col w-full">
-        <div class="safari-window w-full rounded-lg overflow-hidden shadow-md">
-            <div class="safari-toolbar bg-slate-200 px-3 py-2 flex items-center text-xs sm:text-sm">
-                <div class="safari-dots flex space-x-1.5 mr-4">
-                    <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-400"></div>
-                    <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400"></div>
-                    <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-400"></div>
+    <article class="group flex flex-col w-full transition-all duration-500 ease-out">
+        <div class="safari-window w-full rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-slate-200/60 bg-white transition-shadow duration-300">
+            
+            <div class="safari-toolbar bg-slate-50/70 backdrop-blur-xl px-4 py-3 flex items-center border-b border-slate-200/50">
+                <div class="safari-dots flex space-x-2 mr-6">
+                    <div class="dot w-3 h-3 rounded-full bg-rose-400/90 shadow-sm shadow-rose-200 transition-transform duration-300"></div>
+                    <div class="dot w-3 h-3 rounded-full bg-amber-400/90 shadow-sm shadow-amber-200 transition-transform duration-300"></div>
+                    <div class="dot w-3 h-3 rounded-full bg-emerald-400/90 shadow-sm shadow-emerald-200 transition-transform duration-300"></div>
                 </div>
-                <div class="safari-address-bar bg-white px-2 py-1 rounded-md flex-1 text-center text-slate-600 truncate">
-                    <i class="fas fa-lock text-slate-400 mr-1"></i> ${domain}
+                
+                <div class="safari-address-bar bg-white/80 backdrop-blur-lg px-3 py-1.5 rounded-lg flex-1 flex items-center justify-center text-[11px] font-semibold text-slate-600 tracking-tight truncate border border-slate-200/50">
+                    <svg class="w-3 h-3 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    ${domain}
                 </div>
             </div>
-            <div class="iframe-wrapper relative w-full aspect-video sm:aspect-[4/3] md:aspect-video bg-slate-50">
-                <div class="iframe-overlay absolute inset-0 z-10"></div>
-                <div class="iframe-loader absolute inset-0 flex items-center justify-center z-20 bg-slate-50">
-                    <div class="spinner"></div>
+
+            <div class="iframe-wrapper relative w-full aspect-video bg-slate-100 group-hover:bg-white transition-colors">
+                <div class="iframe-overlay absolute inset-0 z-10 cursor-pointer"></div>
+                
+                <div class="iframe-loader absolute inset-0 flex items-center justify-center z-20 bg-slate-50 transition-opacity duration-500">
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></div>
+                    </div>
                 </div>
-                <div class="iframe-container h-full w-full">
-                    <iframe class="w-full h-full border-none safari-iframe" src="${url}" title="Preview ${title}"></iframe>
+
+                <div class="iframe-container h-full w-full ring-2 ring-inset ring-slate-900/10">
+                    <iframe 
+                        class="w-[125%] h-[125%] origin-top-left scale-[0.8] border-none safari-iframe opacity-0 transition-opacity duration-700" 
+                        src="${url}" 
+                        loading="lazy"
+                        title="Preview ${title}">
+                    </iframe>
                 </div>
             </div>
         </div>
         
-        <div class="mt-4 md:mt-6 flex flex-col sm:flex-row sm:justify-between items-center px-2 gap-4 sm:gap-0">
-            <div class="text-center sm:text-left">
-                <h3 class="font-bold text-slate-800 text-base md:text-lg">${title}</h3>
-                <p class="text-xs md:text-sm text-slate-500">${desc}</p>
+        <div class="mt-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1">
+            <div class="flex-1">
+                <h3 class="font-extrabold text-slate-900 text-lg md:text-xl tracking-tight mb-1.5 group-hover:text-blue-600 transition-colors duration-300">
+                    ${title}
+                </h3>
+                <p class="text-sm text-slate-600 leading-relaxed max-w-xs font-medium">
+                    ${desc}
+                </p>
             </div>
+            
             <a href="${url}" target="_blank" 
-               class="btn-access w-full sm:w-auto text-center text-white text-xs font-bold px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg shadow-blue-200 uppercase tracking-wider transition-transform hover:scale-105">
-                Abrir Sistema
+               class="btn-access relative inline-flex items-center justify-center overflow-hidden group/btn bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-extrabold px-8 py-4 rounded-xl shadow-lg shadow-blue-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/60">
+               <span class="relative z-10 uppercase tracking-widest">Acessar</span>
             </a>
         </div>
     </article>`;
-    
+
     const fragment = template.content.cloneNode(true);
-    
-    // Setup loader removal with timeout fallback
     const iframe = fragment.querySelector('.safari-iframe');
     const loader = fragment.querySelector('.iframe-loader');
-    
-    const hideLoader = () => {
-        if (loader) loader.style.display = 'none';
+
+    const showIframe = () => {
+        if (loader) loader.classList.add('opacity-0');
+        if (iframe) iframe.classList.replace('opacity-0', 'opacity-100');
+        setTimeout(() => loader?.remove(), 500);
     };
-    
-    iframe.addEventListener('load', hideLoader);
-    setTimeout(hideLoader, 3000);
-    
+
+    iframe.addEventListener('load', showIframe);
+    setTimeout(showIframe, 4000); // Fail-safe
+
     return fragment;
 }
 
-async function init() {
-    await Promise.all([
-        loadComponent('main-header', 'components/header.html'),
-        loadComponent('main-footer', 'components/footer.html')
-    ]);
-
-    const grid = document.getElementById('systems-grid');
-    systems.forEach(sys => grid.appendChild(createSafariWindow(sys)));
+// fetch and inject an HTML component into a container element
+async function loadComponent(targetId, url) {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
+        const html = await res.text();
+        const el = document.getElementById(targetId);
+        if (el) el.innerHTML = html;
+    } catch (err) {
+        console.error(err);
+    }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// build page once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    loadComponent('main-header', 'components/header.html');
+    loadComponent('main-footer', 'components/footer.html');
+
+    const grid = document.getElementById('systems-grid');
+    if (grid) {
+        systems.forEach(sys => grid.appendChild(createSafariWindow(sys)));
+    }
+}); // end DOMContentLoaded listener
+
