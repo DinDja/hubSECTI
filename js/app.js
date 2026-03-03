@@ -11,6 +11,12 @@ const systems = [
         url: 'https://secti-contratos.netlify.app/',
         domain: 'secti-contratos.netlify.app',
         desc: 'Módulo de administração contratual'
+    },
+    {
+        title: 'Painel Conecta Bahia',
+        url: 'https://conectabahia.netlify.app/',
+        domain: 'conectabahia.netlify.app',
+        desc: 'Consulte a disponibilidade de praças com Wi-Fi gratuito em todo o estado.'
     }
 ];
 
@@ -26,7 +32,7 @@ async function loadComponent(id, path) {
 
 function createSafariWindow({ title, url, domain, desc }) {
     const template = document.createElement('template');
-    
+
     // MOBILE-FIRST UPDATES APPLIED BELOW
     template.innerHTML = `
     <article class="flex flex-col w-full">
@@ -43,8 +49,11 @@ function createSafariWindow({ title, url, domain, desc }) {
             </div>
             <div class="iframe-wrapper relative w-full aspect-video sm:aspect-[4/3] md:aspect-video bg-slate-50">
                 <div class="iframe-overlay absolute inset-0 z-10"></div>
+                <div class="iframe-loader absolute inset-0 flex items-center justify-center z-20 bg-slate-50">
+                    <div class="spinner"></div>
+                </div>
                 <div class="iframe-container h-full w-full">
-                    <iframe class="w-full h-full border-none" src="${url}" title="Preview ${title}"></iframe>
+                    <iframe class="w-full h-full border-none safari-iframe" src="${url}" title="Preview ${title}"></iframe>
                 </div>
             </div>
         </div>
@@ -60,7 +69,21 @@ function createSafariWindow({ title, url, domain, desc }) {
             </a>
         </div>
     </article>`;
-    return template.content.cloneNode(true);
+    
+    const fragment = template.content.cloneNode(true);
+    
+    // Setup loader removal with timeout fallback
+    const iframe = fragment.querySelector('.safari-iframe');
+    const loader = fragment.querySelector('.iframe-loader');
+    
+    const hideLoader = () => {
+        if (loader) loader.style.display = 'none';
+    };
+    
+    iframe.addEventListener('load', hideLoader);
+    setTimeout(hideLoader, 3000);
+    
+    return fragment;
 }
 
 async function init() {
