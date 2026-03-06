@@ -16,14 +16,17 @@ const systems = [
         title: 'Painel Conecta Bahia',
         url: 'https://conectabahia.netlify.app/',
         domain: 'conectabahia.netlify.app',
-        desc: 'Mapa interativo de praças com Wi-Fi gratuito no estado.'
+        desc: 'Mapa interativo de praças com Wi-Fi gratuito no estado.',
+        // quando fornecida, exibimos uma imagem em vez do iframe
+        image: 'assets/images/mapa.png'
     }
 ];
 
-function createSafariWindow({ title, url, domain, desc }) {
+function createSafariWindow({ title, url, domain, desc, image }) {
     const template = document.createElement('template');
 
     // Design refinado com Glassmorphism e sombras suaves
+    // se a propriedade `image` for passada, renderizamos uma <img> em vez do iframe
     template.innerHTML = `
     <article class="group flex flex-col w-full transition-all duration-500 ease-out">
         <div class="safari-window w-full rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-slate-200/60 bg-white transition-shadow duration-300">
@@ -53,12 +56,19 @@ function createSafariWindow({ title, url, domain, desc }) {
                 </div>
 
                 <div class="iframe-container h-full w-full ring-2 ring-inset ring-slate-900/10">
+                    ${image ? `
+                    <img
+                        class="w-full h-full object-cover border-none safari-iframe opacity-0 transition-opacity duration-700"
+                        src="${image}"
+                        alt="Mapa ${title}" />
+                    ` : `
                     <iframe 
                         class="w-[125%] h-[125%] origin-top-left scale-[0.8] border-none safari-iframe opacity-0 transition-opacity duration-700" 
                         src="${url}" 
                         loading="lazy"
                         title="Preview ${title}">
                     </iframe>
+                    `}
                 </div>
             </div>
         </div>
@@ -81,16 +91,18 @@ function createSafariWindow({ title, url, domain, desc }) {
     </article>`;
 
     const fragment = template.content.cloneNode(true);
-    const iframe = fragment.querySelector('.safari-iframe');
+    const contentEl = fragment.querySelector('.safari-iframe'); // can be <iframe> or <img>
     const loader = fragment.querySelector('.iframe-loader');
 
     const showIframe = () => {
         if (loader) loader.classList.add('opacity-0');
-        if (iframe) iframe.classList.replace('opacity-0', 'opacity-100');
+        if (contentEl) contentEl.classList.replace('opacity-0', 'opacity-100');
         setTimeout(() => loader?.remove(), 500);
     };
 
-    iframe.addEventListener('load', showIframe);
+    if (contentEl) {
+        contentEl.addEventListener('load', showIframe);
+    }
     setTimeout(showIframe, 4000); // Fail-safe
 
     return fragment;
