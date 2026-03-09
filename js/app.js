@@ -17,7 +17,6 @@ const systems = [
         url: 'https://conectabahia.netlify.app/',
         domain: 'conectabahia.netlify.app',
         desc: 'Mapa interativo de praças com Wi-Fi gratuito no estado.',
-        // quando fornecida, exibimos uma imagem em vez do iframe
         image: 'assets/images/mapa.png'
     }
 ];
@@ -25,72 +24,67 @@ const systems = [
 function createSafariWindow({ title, url, domain, desc, image }) {
     const template = document.createElement('template');
 
-    // Design refinado com Glassmorphism e sombras suaves
-    // se a propriedade `image` for passada, renderizamos uma <img> em vez do iframe
+    // UX/UI Redesign: Estrutura em Card unificado, prevenção de scroll hijack no iframe,
+    // tipografia refinada e botão de ação em formato "pill" moderno.
     template.innerHTML = `
-    <article class="group flex flex-col w-full transition-all duration-500 ease-out">
-        <div class="safari-window w-full rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-slate-200/60 bg-white transition-shadow duration-300">
+    <article class="group relative flex flex-col w-full bg-white rounded-[24px] p-3 border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-500 ease-out hover:-translate-y-1">
+        
+        <div class="relative w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/50">
             
-            <div class="safari-toolbar bg-slate-50/70 backdrop-blur-xl px-4 py-3 flex items-center border-b border-slate-200/50">
-                <div class="safari-dots flex space-x-2 mr-6">
-                    <div class="dot w-3 h-3 rounded-full bg-rose-400/90 shadow-sm shadow-rose-200 transition-transform duration-300"></div>
-                    <div class="dot w-3 h-3 rounded-full bg-amber-400/90 shadow-sm shadow-amber-200 transition-transform duration-300"></div>
-                    <div class="dot w-3 h-3 rounded-full bg-emerald-400/90 shadow-sm shadow-emerald-200 transition-transform duration-300"></div>
+            <div class="bg-white/90 backdrop-blur-md px-4 py-3 flex items-center justify-between z-10 relative border-b border-slate-200/50">
+                <div class="flex space-x-1.5 w-20">
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-200 group-hover:bg-rose-400 transition-colors duration-300"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-200 group-hover:bg-amber-400 transition-colors duration-300"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-slate-200 group-hover:bg-emerald-400 transition-colors duration-300"></div>
                 </div>
                 
-                <div class="safari-address-bar bg-white/80 backdrop-blur-lg px-3 py-1.5 rounded-lg flex-1 flex items-center justify-center text-[11px] font-semibold text-slate-600 tracking-tight truncate border border-slate-200/50">
-                    <svg class="w-3 h-3 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    ${domain}
-                </div>
-            </div>
-
-            <div class="iframe-wrapper relative w-full aspect-video bg-slate-100 group-hover:bg-white transition-colors">
-                <div class="iframe-overlay absolute inset-0 z-10 cursor-pointer"></div>
-                
-                <div class="iframe-loader absolute inset-0 flex items-center justify-center z-20 bg-slate-50 transition-opacity duration-500">
-                    <div class="relative flex items-center justify-center">
-                        <div class="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"></div>
+                <div class="flex-1 flex justify-center">
+                    <div class="bg-slate-100/80 text-slate-500 text-[10px] sm:text-xs font-medium px-4 py-1.5 rounded-full max-w-[220px] truncate flex items-center gap-1.5 transition-colors group-hover:bg-slate-100 group-hover:text-slate-700">
+                        <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        ${domain}
                     </div>
                 </div>
+                
+                <div class="w-20"></div> 
+            </div>
 
-                <div class="iframe-container h-full w-full ring-2 ring-inset ring-slate-900/10">
-                    ${image ? `
-                    <img
-                        class="w-full h-full object-cover border-none safari-iframe opacity-0 transition-opacity duration-700"
-                        src="${image}"
-                        alt="Mapa ${title}" />
-                    ` : `
-                    <iframe 
-                        class="w-[125%] h-[125%] origin-top-left scale-[0.8] border-none safari-iframe opacity-0 transition-opacity duration-700" 
-                        src="${url}" 
-                        loading="lazy"
-                        title="Preview ${title}">
-                    </iframe>
-                    `}
+            <div class="relative aspect-video w-full bg-slate-50 overflow-hidden">
+                <div class="iframe-loader absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-50 transition-opacity duration-500">
+                    <div class="w-8 h-8 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin mb-3"></div>
+                    <span class="text-xs font-medium text-slate-400 animate-pulse">Carregando interface...</span>
                 </div>
+
+                ${image ? `
+                    <img class="w-full h-full object-cover safari-iframe opacity-0 transition-all duration-700 transform group-hover:scale-105" src="${image}" alt="Preview ${title}" loading="lazy" />
+                ` : `
+                    <iframe class="w-[125%] h-[125%] origin-top-left scale-[0.8] border-none safari-iframe opacity-0 transition-opacity duration-700 pointer-events-none bg-white" src="${url}" loading="lazy" title="Preview ${title}"></iframe>
+                `}
+                
+                <a href="${url}" target="_blank" class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/5 transition-colors duration-300 z-10" aria-label="Acessar ${title}"></a>
             </div>
         </div>
-        
-        <div class="mt-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1">
+
+        <div class="mt-4 px-2 pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex-1">
-                <h3 class="font-extrabold text-slate-900 text-lg md:text-xl tracking-tight mb-1.5 group-hover:text-blue-600 transition-colors duration-300">
+                <h3 class="font-bold text-slate-900 text-lg tracking-tight group-hover:text-blue-600 transition-colors duration-300">
                     ${title}
                 </h3>
-                <p class="text-sm text-slate-600 leading-relaxed max-w-xs font-medium">
+                <p class="text-sm text-slate-500 mt-1 leading-relaxed max-w-sm">
                     ${desc}
                 </p>
             </div>
             
-            <a href="${url}" target="_blank" 
-               class="btn-access relative inline-flex items-center justify-center overflow-hidden group/btn bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-extrabold px-8 py-4 rounded-xl shadow-lg shadow-blue-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/60">
-               <span class="relative z-10 uppercase tracking-widest">Acessar</span>
+            <a href="${url}" target="_blank" class="shrink-0 inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-blue-500/30">
+                Acessar
+                <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
             </a>
         </div>
     </article>`;
-
-    const fragment = template.content.cloneNode(true);
+  const fragment = template.content.cloneNode(true);
     const contentEl = fragment.querySelector('.safari-iframe'); // can be <iframe> or <img>
     const loader = fragment.querySelector('.iframe-loader');
 
@@ -131,4 +125,3 @@ document.addEventListener('DOMContentLoaded', () => {
         systems.forEach(sys => grid.appendChild(createSafariWindow(sys)));
     }
 }); // end DOMContentLoaded listener
-

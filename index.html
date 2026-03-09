@@ -16,15 +16,28 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col bg-slate-50 antialiased text-slate-800">
 
     <header id="main-header"></header>
 
     <main class="container mx-auto px-6 py-12 flex-grow">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Sistemas</h2>
-            <p class="text-slate-600 mt-2 text-base max-w-md mx-auto font-medium leading-relaxed">Acesso rápido aos portais da Secretaria de Ciência,
-                Tecnologia e Inovação.</p>
+        <div class="text-center mb-16 flex flex-col items-center">
+
+            <span
+                class="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white border border-slate-200 text-slate-600 text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] mb-6 shadow-sm">
+                <i class="fas fa-network-wired text-blue-500"></i>
+                Hub de Serviços
+            </span>
+
+            <h1
+                class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-slate-900 via-slate-800 to-slate-500 tracking-tight mb-6 pb-2">
+                Sistemas Integrados
+            </h1>
+
+            <p class="text-slate-500 md:text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+                Plataforma central de acesso rápido aos portais, painéis e ferramentas de gestão da <strong
+                    class="text-slate-700 font-semibold">Secretaria de Ciência, Tecnologia e Inovação</strong>.
+            </p>
         </div>
         <div id="systems-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-12"></div>
     </main>
