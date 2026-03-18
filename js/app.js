@@ -30,6 +30,12 @@ const systems = [
         url: 'https://mapfilterdemo.netlify.app/',
         domain: 'mapfilterdemo.netlify.app',
         desc: 'Mapeamento das unidades de ensino de educação profissional e tecnológica.'
+    },
+    {
+        title: 'CloudSpeak',
+        url: 'https://cloudspeak.netlify.app/',
+        domain: 'cloudspeak.netlify.app',
+        desc: 'Plataforma de apresentações interativas onde o público participa em tempo real.'
     }
 ];
 
