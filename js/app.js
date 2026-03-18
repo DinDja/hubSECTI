@@ -18,6 +18,18 @@ const systems = [
         domain: 'conectabahia.netlify.app',
         desc: 'Mapa interativo de praças com Wi-Fi gratuito no estado.',
         image: 'assets/images/mapa.png'
+    },
+    {
+        title: 'Observatório de CT&I da Bahia',
+        url: 'https://simcc.uesc.br/observatorio',
+        domain: 'simcc.uesc.br',
+        desc: 'Painéis temáticos com dados sobre produção científica, laboratórios, pós-graduação, grupos de pesquisa, inovação e popularização da ciência.'
+    },
+    {
+        title: 'Monitoramento das Unidades de Ensino de Educação Profissional e Tecnológica',
+        url: 'https://mapfilterdemo.netlify.app/',
+        domain: 'mapfilterdemo.netlify.app',
+        desc: 'Monitoramento das unidades de ensino de educação profissional e tecnológica.'
     }
 ];
 
