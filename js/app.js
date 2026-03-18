@@ -26,10 +26,10 @@ const systems = [
         desc: 'Painéis temáticos com dados sobre produção científica, laboratórios, pós-graduação, grupos de pesquisa, inovação e popularização da ciência.'
     },
     {
-        title: 'Monitoramento das Unidades de Ensino de Educação Profissional e Tecnológica',
+        title: 'Mapeamento das Unidades de Ensino de Educação Profissional e Tecnológica',
         url: 'https://mapfilterdemo.netlify.app/',
         domain: 'mapfilterdemo.netlify.app',
-        desc: 'Monitoramento das unidades de ensino de educação profissional e tecnológica.'
+        desc: 'Mapeamento das unidades de ensino de educação profissional e tecnológica.'
     }
 ];
 
