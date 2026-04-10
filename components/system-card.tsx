@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Image, { type StaticImageData } from "next/image"
 import { ArrowUpRight, Maximize2, X, ExternalLink, Loader2 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -15,12 +15,27 @@ interface SystemCardProps {
   image?: string | StaticImageData
 }
 
+function getMshotsPreview(url: string) {
+  const normalizedUrl = url.replace(/^http:\/\//i, "https://")
+  return `https://s.wordpress.com/mshots/v1/${normalizedUrl}?w=1200`
+}
+
 export function SystemCard({ title, description, url, color, icon: Icon, index, image }: SystemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [previewIndex, setPreviewIndex] = useState(0)
+  const [iframeAllowed, setIframeAllowed] = useState<boolean | null>(null)
+  const [iframeCheckError, setIframeCheckError] = useState(false)
+  const previewCandidates = useMemo<Array<string | StaticImageData>>(() => {
+    if (image) {
+      return [image]
+    }
+
+    return [getMshotsPreview(url)]
+  }, [image, url])
+  const previewSrc = previewCandidates[previewIndex] ?? previewCandidates[0]
 
   useEffect(() => {
     if (isExpanded) {
@@ -34,26 +49,62 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
   }, [isExpanded])
 
   useEffect(() => {
-    if (image || !isLoading || hasError) return
+    setPreviewIndex(0)
+    setIsLoading(true)
+    setHasError(false)
+    setIframeAllowed(null)
+    setIframeCheckError(false)
+  }, [image, url])
 
-    // Alguns domínios bloqueiam preview em iframe sem disparar onError.
-    // O timeout evita loader infinito e libera ação de abrir o sistema.
-    const timeoutId = window.setTimeout(() => {
-      setHasError(true)
-      setIsLoading(false)
-    }, 8000)
+  useEffect(() => {
+    if (!isExpanded || image) {
+      return
+    }
+
+    let cancelled = false
+
+    const checkIframePermission = async () => {
+      try {
+        const response = await fetch(`/api/frame-check?url=${encodeURIComponent(url)}`)
+        if (!response.ok) {
+          throw new Error("frame check failed")
+        }
+
+        const result = await response.json() as { allowed: boolean }
+        if (cancelled) return
+
+        setIframeAllowed(result.allowed)
+        setIframeCheckError(!result.allowed)
+      } catch {
+        if (cancelled) return
+
+        setIframeAllowed(false)
+        setIframeCheckError(true)
+      }
+    }
+
+    checkIframePermission()
 
     return () => {
-      window.clearTimeout(timeoutId)
+      cancelled = true
     }
-  }, [image, isLoading, hasError, url])
+  }, [isExpanded, image, url])
 
-  const handleIframeLoad = () => {
+  const handlePreviewLoad = () => {
     setHasError(false)
     setIsLoading(false)
   }
 
-  const handleIframeError = () => {
+  const handlePreviewError = () => {
+    const canTryAnotherSource = previewIndex < previewCandidates.length - 1
+
+    if (canTryAnotherSource) {
+      setPreviewIndex((currentIndex) => currentIndex + 1)
+      setIsLoading(true)
+      setHasError(false)
+      return
+    }
+
     setIsLoading(false)
     setHasError(true)
   }
@@ -109,33 +160,20 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
                 </p>
               </div>
             </div>
-          ) : image ? (
+          ) : (
             <div className="absolute inset-0">
               <Image
-                src={image}
-                alt={title}
+                key={`${title}-${previewIndex}`}
+                src={previewSrc}
+                alt={`Preview do sistema ${title}`}
                 fill
                 className="object-cover"
-                onLoadingComplete={() => setIsLoading(false)}
-                onError={() => handleIframeError()}
+                onLoad={handlePreviewLoad}
+                onError={handlePreviewError}
+                loading={index === 0 ? "eager" : "lazy"}
+                unoptimized
               />
             </div>
-          ) : (
-            <iframe
-              ref={iframeRef}
-              src={url}
-              title={title}
-              className="w-full h-full border-0 pointer-events-none"
-              style={{
-                transform: "scale(0.5)",
-                transformOrigin: "top left",
-                width: "200%",
-                height: "200%",
-              }}
-              loading="lazy"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-            />
           )}
           
           {/* Hover overlay */}
@@ -147,7 +185,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
           <div className="absolute inset-0 z-20 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
             <button
               onClick={() => setIsExpanded(true)}
-              className="pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-foreground text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+              className="cursor-pointer pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-foreground text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
             >
               <Maximize2 className="w-4 h-4" />
               Expandir
@@ -156,7 +194,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+              className="cursor-pointer pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
               style={{ backgroundColor: color }}
             >
               <ExternalLink className="w-4 h-4" />
@@ -203,7 +241,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
 
           {hasError && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Preview indisponivel para este dominio. Use o botao abaixo para abrir o sistema.
+              Nao foi possivel carregar a captura deste site. Use o botao abaixo para abrir o sistema.
             </p>
           )}
 
@@ -262,7 +300,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
                 </a>
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="p-2.5 rounded-xl bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
+                  className="cursor-pointer   p-2.5 rounded-xl bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -280,11 +318,45 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
                 />
               </div>
             ) : (
-              <iframe
-                src={url}
-                title={title}
-                className="w-full h-full border-0"
-              />
+              <div className="relative w-full h-full bg-muted">
+                {iframeAllowed === null ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
+                    <Loader2 className="w-10 h-10 animate-spin" style={{ color }} />
+                    <p className="text-sm text-muted-foreground">
+                      Verificando permissão para exibir este sistema em iframe...
+                    </p>
+                  </div>
+                ) : iframeAllowed ? (
+                  <iframe
+                    src={url}
+                    title={title}
+                    className="w-full h-full border-0"
+                    onError={() => {
+                      setIframeAllowed(false)
+                      setIframeCheckError(true)
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                    <div className="mb-4 rounded-2xl p-4" style={{ backgroundColor: `${color}20` }}>
+                      <Icon className="w-8 h-8" style={{ color }} />
+                    </div>
+                    <h4 className="text-lg font-semibold text-foreground mb-2">Iframe bloqueado</h4>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Este site não permite ser exibido em iframe. Abra-o diretamente em uma nova aba.
+                    </p>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                    >
+                      Abrir em nova aba
+                      <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

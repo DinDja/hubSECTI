@@ -1,7 +1,18 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { ArrowUpRight, Instagram } from "lucide-react"
+import { useEffect, useRef, useState, useCallback } from "react"
+import { ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
+import Image from "next/image"
+
+import { CreativeProgressBar } from "@/components/creative-progress-bar"
+
+type LinkPreview = {
+  url: string
+  title: string
+  description: string
+  image: string
+  siteName: string
+}
 
 type TimelineEvent = {
   date: string
@@ -9,9 +20,15 @@ type TimelineEvent = {
   description: string
   href: string
   source: string
+  preview: LinkPreview
 }
 
-const TIMELINE_EVENTS: TimelineEvent[] = [
+type TimelineApiResponse = {
+  items?: TimelineEvent[]
+  fetchedAt?: string
+}
+
+const FALLBACK_TIMELINE_EVENTS: TimelineEvent[] = [
   {
     date: "10 abr 2026",
     title: "SECTI entrega wi-fi gratuito ao Territorio da Chapada Diamantina",
@@ -19,6 +36,13 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
       "A entrega em Seabra marcou a universalizacao do Conecta Bahia no territorio, com foco em inclusao digital e acesso a servicos publicos.",
     href: "https://www.ba.gov.br/secti/noticias/2026-04/2903/secti-entrega-wi-fi-gratuito-ao-territorio-da-chapada-diamantina",
     source: "Portal SECTI",
+    preview: {
+      url: "https://www.ba.gov.br/secti",
+      title: "SECTI entrega wi-fi gratuito ao Territorio da Chapada Diamantina",
+      description: "A entrega em Seabra marcou a universalizacao do Conecta Bahia no territorio, beneficiando milhares de cidadaos.",
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
+      siteName: "Portal SECTI - Governo da Bahia"
+    }
   },
   {
     date: "07 abr 2026",
@@ -27,6 +51,13 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
       "O diagnostico identifica setores estrategicos e caminhos para fortalecer governanca, talentos e novos negocios inovadores no municipio.",
     href: "https://www.ba.gov.br/secti/noticias/2026-04/2901/secti-e-sebrae-entregam-mapeamento-para-impulsionar-ecossistema-de-inovacao",
     source: "Portal SECTI",
+    preview: {
+      url: "https://www.ba.gov.br/secti",
+      title: "SECTI e Sebrae entregam mapeamento do ecossistema de inovacao",
+      description: "Diagnostico estrategico para impulsionar o ecossistema de inovacao em Ilheus.",
+      image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&q=80",
+      siteName: "Portal SECTI - Governo da Bahia"
+    }
   },
   {
     date: "07 abr 2026",
@@ -35,6 +66,13 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
       "Instancia com participacao de governo, instituicoes cientificas e sociedade civil para consolidar a politica de popularizacao da ciencia entre juventudes.",
     href: "https://www.ba.gov.br/secti/noticias/2026-04/2900/bahia-realiza-1a-reuniao-ordinaria-do-comite-intersetorial-popciencia-jovem",
     source: "Portal SECTI",
+    preview: {
+      url: "https://www.ba.gov.br/secti",
+      title: "Comite Intersetorial PopCiencia Jovem - Primeira Reuniao",
+      description: "Marco historico na politica de popularizacao da ciencia na Bahia.",
+      image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80",
+      siteName: "Portal SECTI - Governo da Bahia"
+    }
   },
   {
     date: "06 abr 2026",
@@ -43,6 +81,13 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
       "Projeto disponibiliza material gratuito com 28 aulas e trilhas praticas para apoiar professores da educacao basica no ensino de inteligencia artificial.",
     href: "https://www.ba.gov.br/secti/noticias/2026-04/2899/rede-bahia-leva-letramento-em-inteligencia-artificial-para-salas-de-aula-da",
     source: "Portal SECTI",
+    preview: {
+      url: "https://www.ba.gov.br/secti",
+      title: "Rede Bah.IA - Letramento em Inteligencia Artificial",
+      description: "Material pedagogico gratuito com 28 aulas para capacitar professores em IA.",
+      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
+      siteName: "Portal SECTI - Governo da Bahia"
+    }
   },
   {
     date: "31 mar 2026",
@@ -51,6 +96,13 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
       "O Minex Hub, primeiro do Norte e Nordeste, nasce para conectar startups, universidades e setor produtivo em desafios reais da cadeia mineral.",
     href: "https://www.ba.gov.br/secti/noticias/2026-03/2897/secti-e-cbpm-inauguram-hub-para-fortalecer-mineracao-sustentavel-na-bahia",
     source: "Portal SECTI",
+    preview: {
+      url: "https://www.ba.gov.br/secti",
+      title: "Minex Hub - Hub de Mineracao Sustentavel",
+      description: "Primeiro hub de mineracao sustentavel do Norte e Nordeste.",
+      image: "https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=800&q=80",
+      siteName: "Portal SECTI - Governo da Bahia"
+    }
   },
   {
     date: "30 mar 2026",
@@ -59,203 +111,420 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
       "Encontro reuniu 52 empreendedoras dos editais Inventiva e marcou o lancamento do Inventivas Hub para conexao e desenvolvimento continuo.",
     href: "https://www.ba.gov.br/secti/noticias/2026-03/2896/secti-e-fapesb-lancam-rede-para-fortalecer-negocios-inovadores-liderados-por",
     source: "Portal SECTI",
+    preview: {
+      url: "https://www.ba.gov.br/secti",
+      title: "Inventivas Hub - Rede de Mulheres Empreendedoras",
+      description: "Lancamento da rede Inventivas Hub reunindo 52 empreendedoras.",
+      image: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80",
+      siteName: "Portal SECTI - Governo da Bahia"
+    }
   },
 ]
 
 const eventColors = ["#00B5AD", "#0077C0", "#7AC143", "#F7941D", "#EC008C", "#ED1C24"]
+const INITIAL_NEWS_LIMIT = 6
+const NEWS_LIMIT_STEP = 6
+const MAX_NEWS_LIMIT = 18
+
+function getPreviewHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, "")
+  } catch {
+    return "ba.gov.br"
+  }
+}
+
+function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: string }) {
+  return (
+    <div
+      className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-300 hover:shadow-md"
+      style={{ boxShadow: `inset 0 0 0 1px ${color}22` }}
+    >
+      <div className="relative h-24 w-full flex-shrink-0 overflow-hidden bg-slate-100 md:h-28">
+        <Image
+          src={preview.image}
+          alt={preview.title}
+          fill
+          sizes="(max-width: 768px) 340px, 380px"
+          className="object-cover"
+        />
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col p-2.5">
+        <div className="mb-1 flex items-center gap-1.5">
+          <Globe className="h-3 w-3 text-slate-400" />
+          <span className="line-clamp-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+            {preview.siteName}
+          </span>
+        </div>
+        <h4 className="line-clamp-2 text-[11px] font-semibold leading-tight text-slate-800">
+          {preview.title}
+        </h4>
+        <p className="mt-1 line-clamp-1 text-[10px] leading-relaxed text-slate-500">
+          {preview.description}
+        </p>
+        <p className="mt-auto line-clamp-1 pt-2 text-[10px] uppercase tracking-wider text-slate-400">
+          {getPreviewHost(preview.url)}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export function SectiTimelineSection() {
   const sectionRef = useRef<HTMLElement | null>(null)
-  const cardRefs = useRef<Array<HTMLElement | null>>([])
-  const [progress, setProgress] = useState(0)
-  const [visibleCards, setVisibleCards] = useState<number[]>([])
-
-  const activeIndex =
-    progress <= 0
-      ? -1
-      : Math.min(TIMELINE_EVENTS.length - 1, Math.floor(progress * TIMELINE_EVENTS.length))
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const [events, setEvents] = useState<TimelineEvent[]>(FALLBACK_TIMELINE_EVENTS)
+  const [isLoadingNews, setIsLoadingNews] = useState(true)
+  const [isLiveFeed, setIsLiveFeed] = useState(false)
+  const [lastRefreshLabel, setLastRefreshLabel] = useState<string | null>(null)
+  const [newsLimit, setNewsLimit] = useState(INITIAL_NEWS_LIMIT)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
+  const [hasMoreNews, setHasMoreNews] = useState(true)
 
   useEffect(() => {
-    let rafId = 0
+    let isMounted = true
+    const controller = new AbortController()
 
-    const updateProgress = () => {
-      const section = sectionRef.current
-      if (!section) return
+    const loadLatestNews = async () => {
+      const isInitialRequest = newsLimit === INITIAL_NEWS_LIMIT
 
-      const rect = section.getBoundingClientRect()
-      const viewportHeight = window.innerHeight || 1
-      const start = viewportHeight * 0.78
-      const end = rect.height - viewportHeight * 0.22
-      const rawProgress = (start - rect.top) / Math.max(end, 1)
-      const nextProgress = Math.min(1, Math.max(0, rawProgress))
+      if (isInitialRequest) {
+        setIsLoadingNews(true)
+      } else {
+        setIsFetchingMore(true)
+      }
 
-      setProgress((current) => {
-        if (Math.abs(current - nextProgress) < 0.002) return current
-        return nextProgress
-      })
+      try {
+        const response = await fetch(`/api/hub/noticias?limit=${newsLimit}&nocache=${Date.now()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Falha ao atualizar noticias: status ${response.status}`)
+        }
+
+        const payload = (await response.json()) as TimelineApiResponse
+        if (!isMounted) {
+          return
+        }
+
+        if (Array.isArray(payload.items) && payload.items.length > 0) {
+          setEvents(payload.items)
+          setIsLiveFeed(true)
+          setHasMoreNews(payload.items.length === newsLimit && newsLimit < MAX_NEWS_LIMIT)
+        } else {
+          setIsLiveFeed(false)
+          setHasMoreNews(false)
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return
+        }
+
+        console.warn("[SectiTimelineSection] Nao foi possivel carregar noticias ao vivo:", error)
+        if (isMounted) {
+          setIsLiveFeed(false)
+          setHasMoreNews(newsLimit < MAX_NEWS_LIMIT)
+        }
+      } finally {
+        if (!isMounted) {
+          return
+        }
+
+        setIsLoadingNews(false)
+        setIsFetchingMore(false)
+        setLastRefreshLabel(
+          new Intl.DateTimeFormat("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date()),
+        )
+      }
     }
 
-    const onScroll = () => {
-      if (rafId) return
-
-      rafId = window.requestAnimationFrame(() => {
-        updateProgress()
-        rafId = 0
-      })
-    }
-
-    updateProgress()
-    window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
+    loadLatestNews()
 
     return () => {
-      if (rafId) window.cancelAnimationFrame(rafId)
+      isMounted = false
+      controller.abort()
+    }
+  }, [newsLimit])
+
+  const handleScroll = useCallback(() => {
+    const section = sectionRef.current
+    if (!section) return
+
+    const rect = section.getBoundingClientRect()
+    const viewportHeight = window.innerHeight
+    const sectionHeight = section.offsetHeight - viewportHeight
+    
+    const scrolled = -rect.top
+    const progress = Math.max(0, Math.min(1, scrolled / sectionHeight))
+    
+    setScrollProgress(progress)
+  }, [])
+
+  useEffect(() => {
+    let rafId: number
+    let ticking = false
+
+    const onScroll = () => {
+      if (!ticking) {
+        rafId = requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    handleScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll, { passive: true })
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", onScroll)
     }
-  }, [])
+  }, [handleScroll])
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return
+  const handleSkip = useCallback(() => {
+    const section = sectionRef.current
+    if (!section) return
+    const total = events.length
+    if (total === 0) return
 
-          const index = Number((entry.target as HTMLElement).dataset.index)
-          if (Number.isNaN(index)) return
+    const currentIndex = Math.min(total - 1, Math.floor(scrollProgress * total))
+    const nextIndex = Math.min(total - 1, currentIndex + 1)
 
-          setVisibleCards((current) => (current.includes(index) ? current : [...current, index]))
-        })
-      },
-      {
-        threshold: 0.25,
-        rootMargin: "0px 0px -12% 0px",
-      },
-    )
+    const viewportHeight = window.innerHeight
+    const sectionHeight = Math.max(0, section.offsetHeight - viewportHeight)
+    const progress = Math.max(0, Math.min(1, nextIndex / total))
+    const targetY = section.offsetTop + progress * sectionHeight
 
-    cardRefs.current.forEach((node) => {
-      if (node) observer.observe(node)
-    })
+    window.scrollTo({ top: targetY, behavior: "smooth" })
+  }, [events, scrollProgress])
 
-    return () => observer.disconnect()
-  }, [])
+  const handleLoadMore = useCallback(() => {
+    if (isLoadingNews || isFetchingMore || !hasMoreNews) {
+      return
+    }
+
+    setNewsLimit((currentLimit) => Math.min(MAX_NEWS_LIMIT, currentLimit + NEWS_LIMIT_STEP))
+  }, [hasMoreNews, isFetchingMore, isLoadingNews])
+
+  const totalCards = events.length
+  const cardWidth = 380
+  const gap = 24
+  const maxTranslate = Math.max(0, (totalCards - 1) * (cardWidth + gap))
+  const activeIndex =
+    totalCards === 0 ? 0 : Math.min(totalCards - 1, Math.floor(scrollProgress * totalCards))
 
   return (
     <section
       ref={sectionRef}
       id="linha-do-tempo-secti"
-      className="relative overflow-hidden bg-gradient-to-b from-[#F4F8FC] via-white to-[#F9FBF6] py-28 md:py-32"
+      className="relative"
+      style={{ height: `${250 + Math.max(totalCards, 1) * 80}vh` }}
     >
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#00B5AD]/10 blur-3xl" />
-        <div className="absolute right-[-5rem] top-1/3 h-80 w-80 rounded-full bg-[#0077C0]/10 blur-3xl" />
-        <div className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-[#7AC143]/10 blur-3xl" />
-      </div>
+      {/* Sticky container */}
+      <div className="sticky top-0 flex h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-[#F4F8FC] via-white to-[#F9FBF6]">
+        {/* Background decorations */}
+        <div className="pointer-events-none absolute inset-0">
+          <div 
+            className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#00B5AD]/10 blur-3xl"
+            style={{ transform: `translateX(${scrollProgress * 100}px)` }}
+          />
+          <div 
+            className="absolute right-[-5rem] top-1/3 h-80 w-80 rounded-full bg-[#0077C0]/10 blur-3xl"
+            style={{ transform: `translateX(${-scrollProgress * 80}px)` }}
+          />
+          <div 
+            className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-[#7AC143]/10 blur-3xl"
+            style={{ transform: `translateY(${-scrollProgress * 60}px)` }}
+          />
+        </div>
 
-      <div className="relative mx-auto w-full max-w-[1250px] px-6 md:px-12 lg:px-16">
-        <div className="mb-14 md:mb-16">
+        {/* Header */}
+        <div className="relative z-10 px-6 pt-8 md:px-12 md:pt-12 lg:px-16">
           <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700 shadow-sm">
             Linha do Tempo
           </span>
-          <h2 className="mt-5 text-4xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-6xl">
+          <h2 className="mt-5 text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl lg:text-6xl">
             Ultimos acontecimentos
             <br />
             <span className="bg-gradient-to-r from-[#0077C0] via-[#00B5AD] to-[#7AC143] bg-clip-text text-transparent">
-              mais importantes da SECTI
+              SECTI
             </span>
           </h2>
-          <p className="mt-5 max-w-3xl text-base leading-relaxed text-slate-600 md:text-lg">
-            Secao com atualizacao recente baseada no portal oficial e com acompanhamento complementar no Instagram da SECTI.
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
+            Acompanhe as principais notícias e ações da Secretaria de Ciência, Tecnologia e Inovação da Bahia.
+          </p>
+          <p aria-live="polite" className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            {isLoadingNews
+              ? "Atualizando notícias do portal institucional..."
+              : isFetchingMore
+                ? "Buscando mais notícias da SECTI..."
+                : isLiveFeed
+                  ? `Feed atualizado automaticamente as ${lastRefreshLabel ?? "agora"}`
+                  : "Modo offline: exibindo notícias salvas"}
           </p>
         </div>
 
-        <div className="grid items-start gap-8 lg:grid-cols-[110px_minmax(0,1fr)] lg:gap-12">
-          <div className="relative hidden lg:block">
-            <div className="sticky top-28">
-              <div className="mx-auto h-[620px] w-[6px] overflow-hidden rounded-full bg-slate-200/80">
-                <div
-                  className="w-full rounded-full bg-gradient-to-b from-[#00B5AD] via-[#0077C0] to-[#7AC143] transition-[height] duration-300 ease-out"
-                  style={{ height: `${Math.max(progress * 100, 2)}%` }}
-                />
-              </div>
-              <p className="mt-4 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-                {Math.round(progress * 100)}% percorrido
-              </p>
-            </div>
-          </div>
+        {/* Progress bar */}
+        <div className="relative z-10 mt-6 px-6 md:mt-8 md:px-12 lg:px-16">
+          <CreativeProgressBar
+            progress={scrollProgress}
+            activeIndex={activeIndex}
+            totalCards={totalCards}
+          />
+        </div>
 
-          <div className="relative space-y-6 md:space-y-8">
-            <div className="absolute left-[11px] top-2 h-[calc(100%-0.5rem)] w-[2px] bg-slate-200 lg:hidden" />
-
-            {TIMELINE_EVENTS.map((event, index) => {
-              const isVisible = visibleCards.includes(index)
-              const isActive = index <= activeIndex
+        {/* Timeline cards container */}
+        <div 
+          className="relative z-10 mt-6 flex-1 overflow-hidden md:mt-8"
+          style={{ perspective: '1500px', perspectiveOrigin: '20% 50%' }}
+        >
+          <div 
+            className="flex h-full items-center gap-6 pl-6 md:pl-12 lg:pl-16"
+            style={{ 
+              transform: `translateX(${-scrollProgress * maxTranslate}px)`,
+              transition: 'transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)'
+            }}
+          >
+            {events.map((event, index) => {
+              const isActive = index === activeIndex
+              const isPast = index < activeIndex
               const markerColor = eventColors[index % eventColors.length]
+              
+              const distanceFromActive = index - activeIndex
+              const zOffset = isActive ? 60 : Math.max(0, 30 - Math.abs(distanceFromActive) * 15)
+              const rotateY = distanceFromActive * -1.5
+              const scale = isActive ? 1 : 0.94
+              const opacity = isActive ? 1 : isPast ? 0.6 : 0.5
 
               return (
                 <article
                   key={event.title}
-                  data-index={index}
-                  ref={(node) => {
-                    cardRefs.current[index] = node
+                  className="relative flex h-[calc(100%-32px)] w-[340px] flex-shrink-0 flex-col overflow-hidden rounded-2xl border bg-white shadow-lg md:w-[380px]"
+                  style={{
+                    transform: `translateZ(${zOffset}px) rotateY(${rotateY}deg) scale(${scale})`,
+                    opacity,
+                    borderColor: isActive ? markerColor : '#e2e8f0',
+                    boxShadow: isActive 
+                      ? `0 20px 40px -15px rgba(0,0,0,0.2), 0 0 0 2px ${markerColor}40`
+                      : '0 4px 20px -5px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease'
                   }}
-                  className={`relative overflow-hidden rounded-3xl border bg-white/90 p-6 pl-10 shadow-sm backdrop-blur transition-all duration-700 md:p-8 md:pl-12 lg:pl-8 ${
-                    isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-30"
-                  } ${isActive ? "border-slate-900/25 shadow-xl" : "border-slate-200/80"}`}
-                  style={{ transitionDelay: `${Math.min(index * 70, 280)}ms` }}
                 >
-                  <div
-                    className="absolute left-[5px] top-10 h-3.5 w-3.5 rounded-full border-[3px] border-white shadow-md transition-transform duration-500 lg:left-[-27px]"
-                    style={{
-                      backgroundColor: markerColor,
-                      transform: isActive ? "scale(1.3)" : "scale(1)",
-                    }}
+                  {/* Color accent - top bar only */}
+                  <div 
+                    className="h-1.5 w-full flex-shrink-0"
+                    style={{ backgroundColor: markerColor }}
                   />
 
-                  <div
-                    className="absolute inset-y-0 left-0 w-1.5 transition-opacity duration-500"
-                    style={{
-                      background: `linear-gradient(180deg, ${markerColor} 0%, transparent 100%)`,
-                      opacity: isActive ? 1 : 0.45,
-                    }}
-                  />
+                  <div className="flex min-h-0 flex-1 flex-col p-4 md:p-5">
+                    {/* Header */}
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span 
+                        className="inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white"
+                        style={{ backgroundColor: markerColor }}
+                      >
+                        {event.date}
+                      </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        {event.source}
+                      </span>
+                    </div>
 
-                  <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <span className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
-                      {event.date}
-                    </span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      {event.source}
-                    </span>
+                    {/* Title */}
+                    <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 md:text-lg">
+                      {event.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                      {event.description}
+                    </p>
+
+                    {/* Link Preview */}
+                    <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                      <LinkPreviewCard preview={event.preview} color={markerColor} />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                      <a
+                        href={event.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                        style={{ color: markerColor }}
+                      >
+                        Ler mais
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </a>
+                      <span 
+                        className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={{ backgroundColor: `${markerColor}15`, color: markerColor }}
+                      >
+                        {index + 1}
+                      </span>
+                    </div>
                   </div>
-
-                  <h3 className="text-2xl font-bold leading-tight text-slate-900">{event.title}</h3>
-                  <p className="mt-3 text-base leading-relaxed text-slate-600">{event.description}</p>
-
-                  <a
-                    href={event.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#0077C0] transition-colors hover:text-[#00B5AD]"
-                  >
-                    Ler noticia completa
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
                 </article>
               )
             })}
+
+            {/* End spacer */}
+            <div className="w-[40vw] flex-shrink-0" />
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-sm md:flex-row md:items-center md:justify-between md:p-6">
-          <p className="text-sm leading-relaxed text-slate-600">
-            Fontes monitoradas: portal oficial da SECTI e Instagram institucional para acompanhar atualizacoes.
-          </p>
+        {/* Bottom bar */}
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-white/80 px-6 py-4 backdrop-blur-sm md:px-12 lg:px-16">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-xs text-slate-500 md:text-sm">
+              Role para explorar a linha do tempo
+            </p>
+            <button
+              type="button"
+              onClick={handleSkip}
+              disabled={totalCards <= 1 || activeIndex >= totalCards - 1}
+              aria-label="Pular para próxima notícia"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-2"
+            >
+              Pular notícia
+            </button>
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={isLoadingNews || isFetchingMore || !hasMoreNews}
+              aria-label="Ver mais notícias da SECTI"
+              className="inline-flex items-center gap-2 rounded-full border border-[#0077C0]/20 bg-[#0077C0]/5 px-3 py-1.5 text-xs font-semibold text-[#0077C0] transition-all hover:border-[#0077C0] hover:bg-[#0077C0]/10 disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-2"
+            >
+              {isFetchingMore ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Buscando...
+                </>
+              ) : hasMoreNews ? (
+                "Ver mais notícias"
+              ) : (
+                "Todas carregadas"
+              )}
+            </button>
+          </div>
           <a
             href="https://www.instagram.com/sectibahia/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-[#EC008C] hover:text-[#EC008C]"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:border-[#EC008C] hover:text-[#EC008C] md:px-4 md:py-2 md:text-sm"
           >
             <Instagram className="h-4 w-4" />
             @sectibahia

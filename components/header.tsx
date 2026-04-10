@@ -106,9 +106,8 @@ export function Header() {
               <Image
                 src={govbaLogo}
                 alt="Governo do Estado da Bahia"
-                width={160}
-                height={42}
-                className="object-contain"
+                style={{ maxWidth: "180px", height: "auto" }}
+                className="h-auto w-auto object-contain"
               />
             </div>
           </div>

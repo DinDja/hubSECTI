@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { SiteLoader } from '@/components/site-loader'
 import './globals.css'
 
 const inter = Inter({ 
@@ -39,6 +40,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <SiteLoader />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

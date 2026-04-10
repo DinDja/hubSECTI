@@ -84,7 +84,7 @@ export function Footer() {
                   alt="Governo do Estado da Bahia"
                   width={180}
                   height={48}
-                  className="object-contain"
+                  className="h-auto w-auto object-contain"
                 />
               </div>
             </div>

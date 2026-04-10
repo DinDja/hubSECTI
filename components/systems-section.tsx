@@ -12,8 +12,6 @@ import {
   Sparkles,
   Globe,
 } from "lucide-react"
-import mapaImage from "@/app/assets/images/mapa.png"
-import territoriosImage from "@/app/assets/images/territorios.png"
 
 const colors = {
   green: "#7AC143",
@@ -46,7 +44,7 @@ const systems = [
     title: "Painel Conecta Bahia",
     description: "Painel de visualização e monitoramento dos projetos de conectividade em toda a Bahia.",
     url: "https://conectabahia.netlify.app/",
-    image: mapaImage,
+
     icon: Map,
     color: colors.green,
     category: "dados",
@@ -87,7 +85,6 @@ const systems = [
     title: "Painel SECTI Territórios",
     description: "Painel de mapas e indicadores territoriais que mostra a atuação da secretaria por região.",
     url: "https://secti-territorios.netlify.app/",
-    image: territoriosImage,
     icon: Building2,
     color: colors.blue,
     category: "dados",
@@ -119,11 +116,6 @@ export function SystemsSection() {
       <div className="relative px-6 md:px-10 lg:px-16 max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/30 mb-6">
-            <Sparkles className="w-4 h-4" style={{ color: colors.orange }} />
-            <span className="text-sm font-medium">Plataformas Digitais</span>
-          </div>
-          
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             Nossos{" "}
             <span 
@@ -139,8 +131,8 @@ export function SystemsSection() {
           </h2>
           
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Ferramentas digitais desenvolvidas para modernizar a gestao publica 
-            e ampliar o acesso a informacao no estado da Bahia.
+            Ferramentas digitais desenvolvidas para modernizar a gestão pública 
+            e ampliar o acesso à informação no estado da Bahia.
           </p>
         </div>
 
@@ -150,7 +142,7 @@ export function SystemsSection() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+              className={`cursor-pointer px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
                 activeCategory === cat.id
                   ? "text-white shadow-lg scale-105"
                   : "bg-muted hover:bg-muted/80"
