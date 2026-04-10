@@ -344,16 +344,6 @@ export function AboutSection() {
             A Secretaria de Ciencia, Tecnologia e Inovacao trabalha para transformar 
             o estado atraves da tecnologia, promovendo desenvolvimento e qualidade de vida.
           </p>
-
-          <p className="text-sm text-muted-foreground mt-5 max-w-3xl mx-auto">
-            {dataStatus === "ready"
-              ? `Dados integrados ao vivo de SECTI_TERRITORIOS e Conecta Bahia. Totais do Conecta ajustados para a referencia validada (348 municipios, 27 territorios e 768 pracas instaladas).`
-              : dataStatus === "cached"
-                ? `Fonte territorial indisponivel no momento. Exibindo ultimo valor validado para entidades mapeadas (${liveStats[2]?.value.toLocaleString("pt-BR")}).`
-              : dataStatus === "error"
-                ? "Nao foi possivel atualizar os dados ao vivo agora. Os indicadores exibem a base inicial da secao."
-                : "Carregando dados das fontes integradas para atualizar os indicadores..."}
-          </p>
         </div>
 
         {/* Stats - Bento Grid Style */}
@@ -425,15 +415,15 @@ export function AboutSection() {
           <div className="lg:col-span-2 flex flex-col justify-center">
             <div className="space-y-6">
               <p className="text-lg text-muted-foreground leading-relaxed">
-                A <strong className="text-foreground">Secretaria de Ciencia, Tecnologia e Inovacao</strong> atua 
-                na formulacao e implementacao de politicas publicas que promovem o avanco 
-                cientifico, a inovacao tecnologica e o desenvolvimento sustentavel.
+                A <strong className="text-foreground">Secretaria de Ciência, Tecnologia e Inovação</strong> atua 
+                na formulação e implementação de políticas públicas que promovem o avanço 
+                científico e a inovação tecnológica.
               </p>
               
               <p className="text-lg text-muted-foreground leading-relaxed">
                 Este hub digital centraliza as principais ferramentas e sistemas da secretaria, 
                 facilitando o acesso para servidores, pesquisadores, gestores e todos os 
-                cidadaos baianos.
+                cidadãos baianos.
               </p>
               
               <div className="pt-4">
@@ -446,7 +436,7 @@ export function AboutSection() {
                     color: "white",
                   }}
                 >
-                  <span>Conheca o Portal Oficial</span>
+                  <span>Conheça o Portal Oficial</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </div>
