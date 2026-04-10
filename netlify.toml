@@ -1,5 +1,6 @@
 [build]
   command = "corepack pnpm build"
+  publish = ".next"
 
 [dev]
   command = "corepack pnpm dev"
