@@ -347,7 +347,7 @@ export function AboutSection() {
 
           <p className="text-sm text-muted-foreground mt-5 max-w-3xl mx-auto">
             {dataStatus === "ready"
-              ? `Dados integrados ao vivo de SECTI_TERRITORIOS e Conecta Bahia. ${assistenciaTerritorios} territorios com assistencia publica identificada. Totais do Conecta ajustados para a referencia validada (348 municipios, 27 territorios e 768 pracas instaladas).`
+              ? `Dados integrados ao vivo de SECTI_TERRITORIOS e Conecta Bahia. Totais do Conecta ajustados para a referencia validada (348 municipios, 27 territorios e 768 pracas instaladas).`
               : dataStatus === "cached"
                 ? `Fonte territorial indisponivel no momento. Exibindo ultimo valor validado para entidades mapeadas (${liveStats[2]?.value.toLocaleString("pt-BR")}).`
               : dataStatus === "error"
