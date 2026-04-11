@@ -42,8 +42,17 @@ type CachedAboutStats = {
   assistenciaTerritorios: number
 }
 
+type AboutNewsApiResponse = {
+  items?: Array<{
+    preview?: {
+      image?: string
+    }
+  }>
+}
+
 const ABOUT_CACHE_KEY = "hub_about_stats_cache_v1"
 const DEFAULT_ENTIDADES_FALLBACK = 500
+const ABOUT_NEWS_LIMIT = 6
 
 function readCachedAboutStats(): CachedAboutStats | null {
   if (typeof window === "undefined") return null
@@ -181,6 +190,7 @@ function FloatingShape({ color, size, top, left, delay }: {
 export function AboutSection() {
   const initialCachedStats = readCachedAboutStats()
   const [hoveredStat, setHoveredStat] = useState<number | null>(null)
+  const [newsBackgroundImages, setNewsBackgroundImages] = useState<string[]>([])
   const [liveStats, setLiveStats] = useState<StatItem[]>(() =>
     buildStats(initialCachedStats?.totalEntidades ?? DEFAULT_ENTIDADES_FALLBACK),
   )
@@ -249,6 +259,57 @@ export function AboutSection() {
     }
   }, [])
 
+  useEffect(() => {
+    let isMounted = true
+    const controller = new AbortController()
+
+    const loadLatestNewsBackground = async () => {
+      try {
+        const response = await fetch(`/api/hub/noticias?limit=${ABOUT_NEWS_LIMIT}&nocache=${Date.now()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Falha ao carregar noticias para o fundo: status ${response.status}`)
+        }
+
+        const payload = (await response.json()) as AboutNewsApiResponse
+
+        if (!isMounted) {
+          return
+        }
+
+        const images = (payload.items ?? [])
+          .map((item) => item.preview?.image)
+          .filter((image): image is string => typeof image === "string" && image.length > 0)
+          .slice(0, ABOUT_NEWS_LIMIT)
+
+        setNewsBackgroundImages(images)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return
+        }
+
+        console.warn("[AboutSection] Nao foi possivel carregar imagens das noticias:", error)
+
+        if (isMounted) {
+          setNewsBackgroundImages([])
+        }
+      }
+    }
+
+    loadLatestNewsBackground()
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [])
+
   return (
     <section id="sobre" className="relative py-32 md:py-40 overflow-hidden">
       <style jsx global>{`
@@ -270,6 +331,31 @@ export function AboutSection() {
         }
       `}</style>
 
+      {newsBackgroundImages.length > 0 && (
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 grid-rows-3 md:grid-rows-2">
+            {newsBackgroundImages.map((image, index) => (
+              <div key={`${image}-${index}`} className="relative overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url("${image}")`,
+                    opacity: 0.70,
+                    clipPath:
+                      index % 2 === 0
+                        ? "polygon(0 0, 100% 0, 80% 100%, 0% 100%)"
+                        : "polygon(20% 0, 100% 0, 100% 100%, 0 100%)",
+                    transform: index % 2 === 0 ? "scale(1.05) translateX(-2%)" : "scale(1.05) translateX(2%)",
+                  }}
+                />
+                <div className="absolute inset-0 bg-white/70" />
+              </div>
+            ))}
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/65 via-white/55 to-white/75" />
+        </div>
+      )}
+
       {/* Floating background shapes */}
       <FloatingShape color={colors.cyan} size={300} top="10%" left="5%" delay={0} />
       <FloatingShape color={colors.orange} size={200} top="60%" left="80%" delay={1} />
@@ -277,7 +363,7 @@ export function AboutSection() {
       <FloatingShape color={colors.green} size={180} top="20%" left="70%" delay={1.5} />
 
       {/* Animated grid lines */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.03] pointer-events-none">
+      <svg className="absolute inset-0 z-10 w-full h-full opacity-[0.03] pointer-events-none">
         <defs>
           <pattern id="about-grid" width="100" height="100" patternUnits="userSpaceOnUse">
             <path d="M 100 0 L 0 0 0 100" fill="none" stroke="currentColor" strokeWidth="1" />
@@ -286,7 +372,7 @@ export function AboutSection() {
         <rect width="100%" height="100%" fill="url(#about-grid)" />
       </svg>
 
-      <div className="relative px-6 md:px-10 lg:px-16 max-w-[1600px] mx-auto">
+      <div className="relative z-20 px-6 md:px-10 lg:px-16 max-w-[1600px] mx-auto">
         
         {/* Section header */}
         <div className="text-center mb-20">
