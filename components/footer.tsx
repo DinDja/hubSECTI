@@ -47,17 +47,17 @@ export function Footer() {
     <footer className="relative overflow-hidden bg-background">
       {/* Decorative shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <svg 
-          className="absolute -top-20 -right-20 w-80 h-80 opacity-[0.03]" 
+        <svg
+          className="absolute -top-20 -right-20 w-80 h-80 opacity-[0.03]"
           viewBox="0 0 200 200"
         >
-          <polygon 
-            points="100,10 190,60 190,140 100,190 10,140 10,60" 
+          <polygon
+            points="100,10 190,60 190,140 100,190 10,140 10,60"
             fill={colors.cyan}
           />
         </svg>
-        <svg 
-          className="absolute -bottom-10 -left-10 w-60 h-60 opacity-[0.03]" 
+        <svg
+          className="absolute -bottom-10 -left-10 w-60 h-60 opacity-[0.03]"
           viewBox="0 0 200 200"
         >
           <circle cx="100" cy="100" r="90" fill={colors.magenta} />
@@ -65,7 +65,7 @@ export function Footer() {
       </div>
 
       {/* Gradient top border */}
-      <div 
+      <div
         className="h-1"
         style={{
           background: `linear-gradient(90deg, ${colors.green}, ${colors.cyan}, ${colors.blue}, ${colors.magenta}, ${colors.orange}, ${colors.red}, ${colors.yellow})`,
@@ -82,14 +82,13 @@ export function Footer() {
                 <Image
                   src={govbaLogo}
                   alt="Governo do Estado da Bahia"
-                  width={180}
-                  height={48}
+                  style={{ maxWidth: "180px", height: "auto" }}
                   className="h-auto w-auto object-contain"
                 />
               </div>
             </div>
             <p className="text-muted-foreground leading-relaxed max-w-md mb-8">
-              Secretaria de Ciencia, Tecnologia e Inovacao do Estado da Bahia. 
+              Secretaria de Ciencia, Tecnologia e Inovacao do Estado da Bahia.
               Promovendo o desenvolvimento atraves da inovacao e da transformacao digital.
             </p>
           </div>
@@ -142,8 +141,8 @@ export function Footer() {
 
       {/* Large BAHIA text watermark */}
       <div className="relative h-24 md:h-32 overflow-hidden">
-        <div 
-          className="absolute inset-0 flex items-center justify-center select-none" 
+        <div
+          className="absolute inset-0 flex items-center justify-center select-none"
           style={{
             fontSize: "clamp(6rem, 20vw, 14rem)",
             fontWeight: 900,
