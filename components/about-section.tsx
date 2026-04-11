@@ -341,8 +341,8 @@ export function AboutSection() {
           </h2>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            A Secretaria de Ciencia, Tecnologia e Inovacao trabalha para transformar 
-            o estado atraves da tecnologia, promovendo desenvolvimento e qualidade de vida.
+            A Secretaria de Ciência, Tecnologia e Inovação trabalha para transformar 
+            o estado através da tecnologia, promovendo desenvolvimento e qualidade de vida.
           </p>
         </div>
 
