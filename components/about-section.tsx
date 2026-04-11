@@ -304,7 +304,7 @@ export function AboutSection() {
           </div>
           
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] mb-6">
-            Ciencia e tecnologia
+            Ciencia tecnologia e inovacao
             <br />
             <span className="relative inline-block">
               para a{" "}
