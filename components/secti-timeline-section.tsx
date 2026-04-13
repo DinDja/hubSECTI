@@ -168,8 +168,10 @@ function buildImageProxyUrl(rawUrl: string) {
 }
 
 function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: string }) {
-  const imageUrl = buildImageProxyUrl(preview.image)
-  const fallbackImageUrl = buildImageProxyUrl(DEFAULT_PREVIEW_IMAGE)
+  const directImageUrl = normalizePreviewImageUrl(preview.image)
+  const proxyImageUrl = buildImageProxyUrl(directImageUrl)
+  const fallbackImageUrl = normalizePreviewImageUrl(DEFAULT_PREVIEW_IMAGE)
+  const fallbackProxyImageUrl = buildImageProxyUrl(fallbackImageUrl)
 
   return (
     <div
@@ -178,18 +180,30 @@ function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: stri
     >
       <div className="relative h-24 w-full flex-shrink-0 overflow-hidden bg-slate-100 md:h-28">
         <img
-          src={imageUrl}
+          src={directImageUrl}
           alt={preview.title}
           loading="lazy"
           referrerPolicy="no-referrer"
           className="h-full w-full object-cover"
           onError={(event) => {
-            if (event.currentTarget.dataset.fallbackApplied === "true") {
+            const currentMode = event.currentTarget.dataset.loadMode ?? "direct"
+
+            if (currentMode === "direct") {
+              event.currentTarget.dataset.loadMode = "proxy"
+              event.currentTarget.src = proxyImageUrl
               return
             }
 
-            event.currentTarget.dataset.fallbackApplied = "true"
-            event.currentTarget.src = fallbackImageUrl
+            if (currentMode === "proxy") {
+              event.currentTarget.dataset.loadMode = "fallback"
+              event.currentTarget.src = fallbackImageUrl
+              return
+            }
+
+            if (currentMode === "fallback") {
+              event.currentTarget.dataset.loadMode = "fallback-proxy"
+              event.currentTarget.src = fallbackProxyImageUrl
+            }
           }}
         />
       </div>
@@ -257,7 +271,11 @@ export function SectiTimelineSection() {
         }
 
         if (Array.isArray(payload.items) && payload.items.length > 0) {
-          setEvents(payload.items)
+          const uniqueItems = payload.items.filter((item, index, allItems) => {
+            return allItems.findIndex((candidate) => candidate.href === item.href) === index
+          })
+
+          setEvents(uniqueItems)
           setIsLiveFeed(true)
           setHasMoreNews(payload.items.length === newsLimit && newsLimit < MAX_NEWS_LIMIT)
         } else {
@@ -454,7 +472,7 @@ export function SectiTimelineSection() {
 
               return (
                 <article
-                  key={event.title}
+                  key={event.href}
                   className="relative flex h-[calc(100%-32px)] w-[340px] flex-shrink-0 flex-col overflow-hidden rounded-2xl border bg-white shadow-lg md:w-[380px]"
                   style={{
                     transform: `translateZ(${zOffset}px) rotateY(${rotateY}deg) scale(${scale})`,

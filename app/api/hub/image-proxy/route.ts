@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 
 const MAX_TARGET_LENGTH = 2048
 const ALLOWED_HOSTS = new Set(["www.ba.gov.br", "ba.gov.br", "images.unsplash.com"])
+const UPSTREAM_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -76,6 +78,9 @@ export async function GET(request: Request) {
       redirect: "follow",
       headers: {
         Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "User-Agent": UPSTREAM_USER_AGENT,
+        Referer: "https://www.ba.gov.br/",
       },
     })
 
@@ -92,8 +97,12 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "CDN-Cache-Control": "no-store",
+        "Netlify-CDN-Cache-Control": "no-store",
+        Vary: "Accept, Accept-Encoding",
         "X-Hub-Image-Proxy": "1",
+        "X-Hub-Image-Host": target.hostname,
       },
     })
   } catch (error) {

@@ -5,6 +5,12 @@ const DEFAULT_SOURCE = "Portal SECTI"
 const DEFAULT_SITE_NAME = "SECTI - Secretaria de Ciencia, Tecnologia e Inovacao"
 const DEFAULT_IMAGE =
   "https://www.ba.gov.br/secti/modules/custom/bagov_base_blocks/assets/images/logo-governo-rodape.png"
+const UPSTREAM_HEADERS = {
+  Accept: "text/html,application/xhtml+xml",
+  "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+} as const
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -190,12 +196,38 @@ function extractNewsLinks(html: string) {
   return links
 }
 
+function isLikelyDecorativeImage(url: string) {
+  const normalized = url.toLowerCase()
+
+  return (
+    normalized.includes("logo-governo-rodape") ||
+    normalized.includes("access_icon") ||
+    normalized.includes("access_popup") ||
+    normalized.includes("vlibras")
+  )
+}
+
+function extractContentImage(html: string, baseUrl: string) {
+  const imgTags = html.match(/<img\s+[^>]*>/gi) ?? []
+
+  for (const tag of imgTags) {
+    const src = extractAttr(tag, "src")
+    const normalized = normalizeAbsoluteHttpsUrl(src, baseUrl)
+
+    if (!normalized || isLikelyDecorativeImage(normalized)) {
+      continue
+    }
+
+    return normalized
+  }
+
+  return null
+}
+
 async function buildNewsItem(link: string): Promise<NewsItem | null> {
   const upstream = await fetch(link, {
     cache: "no-store",
-    headers: {
-      Accept: "text/html,application/xhtml+xml",
-    },
+    headers: UPSTREAM_HEADERS,
   })
 
   if (!upstream.ok) {
@@ -210,11 +242,15 @@ async function buildNewsItem(link: string): Promise<NewsItem | null> {
   const title = meta["og:title"] ?? "Noticia institucional da SECTI"
   const description =
     meta["og:description"] ?? "Clique para abrir a materia completa no portal institucional da SECTI."
+  const primaryMetaImage = normalizeAbsoluteHttpsUrl(
+    meta["og:image:secure_url"] ?? meta["og:image"] ?? meta["twitter:image"],
+    href,
+  )
+  const contentImage = extractContentImage(html, href)
   const image =
-    normalizeAbsoluteHttpsUrl(
-      meta["og:image:secure_url"] ?? meta["og:image"] ?? meta["twitter:image"],
-      href,
-    ) ?? DEFAULT_IMAGE
+    (primaryMetaImage && !isLikelyDecorativeImage(primaryMetaImage)
+      ? primaryMetaImage
+      : contentImage) ?? DEFAULT_IMAGE
 
   return {
     date: toShortDate(publicationDate, href),
@@ -240,9 +276,7 @@ export async function GET(request: Request) {
   try {
     const listResponse = await fetch(NEWS_LIST_URL, {
       cache: "no-store",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-      },
+      headers: UPSTREAM_HEADERS,
     })
 
     const listHtml = await listResponse.text()
@@ -269,6 +303,7 @@ export async function GET(request: Request) {
     }
 
     const items: NewsItem[] = []
+    const seenHrefs = new Set<string>()
 
     for (const link of links) {
       if (items.length >= limit) {
@@ -277,7 +312,8 @@ export async function GET(request: Request) {
 
       try {
         const item = await buildNewsItem(link)
-        if (item) {
+        if (item && !seenHrefs.has(item.href)) {
+          seenHrefs.add(item.href)
           items.push(item)
         }
       } catch {

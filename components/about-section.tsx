@@ -53,10 +53,35 @@ type AboutNewsApiResponse = {
 const ABOUT_CACHE_KEY = "hub_about_stats_cache_v1"
 const DEFAULT_ENTIDADES_FALLBACK = 500
 const ABOUT_NEWS_LIMIT = 6
+const DEFAULT_NEWS_IMAGE =
+  "https://www.ba.gov.br/secti/modules/custom/bagov_base_blocks/assets/images/logo-governo-rodape.png"
 
-function buildNewsImageProxyUrl(rawUrl: string) {
-  const normalizedUrl = rawUrl.trim()
-  return `/api/hub/image-proxy?url=${encodeURIComponent(normalizedUrl)}`
+function normalizeNewsImageUrl(rawUrl: string) {
+  const trimmed = rawUrl.trim()
+
+  if (!trimmed) {
+    return DEFAULT_NEWS_IMAGE
+  }
+
+  let candidate = trimmed
+
+  if (candidate.startsWith("//")) {
+    candidate = `https:${candidate}`
+  } else if (candidate.startsWith("/")) {
+    candidate = `https://www.ba.gov.br${candidate}`
+  }
+
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return DEFAULT_NEWS_IMAGE
+    }
+
+    parsed.protocol = "https:"
+    return parsed.toString()
+  } catch {
+    return DEFAULT_NEWS_IMAGE
+  }
 }
 
 function readCachedAboutStats(): CachedAboutStats | null {
@@ -288,11 +313,20 @@ export function AboutSection() {
           return
         }
 
+        const seen = new Set<string>()
         const images = (payload.items ?? [])
           .map((item) => item.preview?.image?.trim())
           .filter((image): image is string => typeof image === "string" && image.length > 0)
+          .map((image) => normalizeNewsImageUrl(image))
+          .filter((image) => {
+            if (image === DEFAULT_NEWS_IMAGE || seen.has(image)) {
+              return false
+            }
+
+            seen.add(image)
+            return true
+          })
           .slice(0, ABOUT_NEWS_LIMIT)
-          .map((image) => buildNewsImageProxyUrl(image))
 
         setNewsBackgroundImages(images)
       } catch (error) {
