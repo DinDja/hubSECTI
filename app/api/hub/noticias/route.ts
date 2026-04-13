@@ -84,6 +84,36 @@ function parseMetaTags(html: string): MetaMap {
   return meta
 }
 
+function normalizeAbsoluteHttpsUrl(rawUrl: string | null | undefined, baseUrl?: string) {
+  if (!rawUrl) {
+    return null
+  }
+
+  const trimmed = normalizeWhitespace(rawUrl)
+  if (!trimmed) {
+    return null
+  }
+
+  let candidate = trimmed
+
+  if (candidate.startsWith("//")) {
+    candidate = `https:${candidate}`
+  }
+
+  try {
+    const parsed = new URL(candidate, baseUrl)
+
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null
+    }
+
+    parsed.protocol = "https:"
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
 function toShortDate(rawDate: string | null, fallbackUrl: string) {
   if (rawDate) {
     const match = rawDate.match(/(\d{2})\/(\d{2})\/(\d{4})/)
@@ -176,10 +206,15 @@ async function buildNewsItem(link: string): Promise<NewsItem | null> {
   const meta = parseMetaTags(html)
   const publicationDate = extractPublicationDate(html)
 
-  const href = (meta["og:url"] ?? link).replace(/^http:\/\//i, "https://")
+  const href = normalizeAbsoluteHttpsUrl(meta["og:url"], link) ?? normalizeAbsoluteHttpsUrl(link) ?? link
   const title = meta["og:title"] ?? "Noticia institucional da SECTI"
   const description =
     meta["og:description"] ?? "Clique para abrir a materia completa no portal institucional da SECTI."
+  const image =
+    normalizeAbsoluteHttpsUrl(
+      meta["og:image:secure_url"] ?? meta["og:image"] ?? meta["twitter:image"],
+      href,
+    ) ?? DEFAULT_IMAGE
 
   return {
     date: toShortDate(publicationDate, href),
@@ -191,7 +226,7 @@ async function buildNewsItem(link: string): Promise<NewsItem | null> {
       url: href,
       title,
       description,
-      image: meta["og:image"] ?? DEFAULT_IMAGE,
+      image,
       siteName: meta["og:site_name"] ?? DEFAULT_SITE_NAME,
     },
   }

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
-import Image from "next/image"
 
 import { CreativeProgressBar } from "@/components/creative-progress-bar"
 
@@ -125,6 +124,8 @@ const eventColors = ["#00B5AD", "#0077C0", "#7AC143", "#F7941D", "#EC008C", "#ED
 const INITIAL_NEWS_LIMIT = 6
 const NEWS_LIMIT_STEP = 6
 const MAX_NEWS_LIMIT = 18
+const DEFAULT_PREVIEW_IMAGE =
+  "https://www.ba.gov.br/secti/modules/custom/bagov_base_blocks/assets/images/logo-governo-rodape.png"
 
 function getPreviewHost(url: string) {
   try {
@@ -134,19 +135,55 @@ function getPreviewHost(url: string) {
   }
 }
 
+function normalizePreviewImageUrl(rawUrl: string) {
+  const trimmed = rawUrl.trim()
+  if (!trimmed) {
+    return DEFAULT_PREVIEW_IMAGE
+  }
+
+  let candidate = trimmed
+
+  if (candidate.startsWith("//")) {
+    candidate = `https:${candidate}`
+  } else if (candidate.startsWith("/")) {
+    candidate = `https://www.ba.gov.br${candidate}`
+  }
+
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return DEFAULT_PREVIEW_IMAGE
+    }
+
+    parsed.protocol = "https:"
+    return parsed.toString()
+  } catch {
+    return DEFAULT_PREVIEW_IMAGE
+  }
+}
+
 function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: string }) {
+  const imageUrl = normalizePreviewImageUrl(preview.image)
+
   return (
     <div
       className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-300 hover:shadow-md"
       style={{ boxShadow: `inset 0 0 0 1px ${color}22` }}
     >
       <div className="relative h-24 w-full flex-shrink-0 overflow-hidden bg-slate-100 md:h-28">
-        <Image
-          src={preview.image}
+        <img
+          src={imageUrl}
           alt={preview.title}
-          fill
-          sizes="(max-width: 768px) 340px, 380px"
-          className="object-cover"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            if (event.currentTarget.src === DEFAULT_PREVIEW_IMAGE) {
+              return
+            }
+
+            event.currentTarget.src = DEFAULT_PREVIEW_IMAGE
+          }}
         />
       </div>
       <div className="flex min-h-0 flex-1 flex-col p-2.5">
