@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Lightbulb, Users, Rocket, Target, Zap, Globe, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
+import { buildImageProxyPath } from "@/lib/image-proxy"
 
 const colors = {
   green: "#7AC143",
@@ -53,6 +54,7 @@ type AboutNewsApiResponse = {
 const ABOUT_CACHE_KEY = "hub_about_stats_cache_v1"
 const DEFAULT_ENTIDADES_FALLBACK = 500
 const ABOUT_NEWS_LIMIT = 6
+const ABOUT_NEWS_BACKGROUND_SLOTS = 6
 const DEFAULT_NEWS_IMAGE =
   "https://www.ba.gov.br/secti/modules/custom/bagov_base_blocks/assets/images/logo-governo-rodape.png"
 
@@ -82,6 +84,24 @@ function normalizeNewsImageUrl(rawUrl: string) {
   } catch {
     return DEFAULT_NEWS_IMAGE
   }
+}
+
+function buildNewsImageProxyUrl(rawUrl: string) {
+  return buildImageProxyPath(normalizeNewsImageUrl(rawUrl))
+}
+
+function fillBackgroundSlots(images: string[]) {
+  if (images.length === 0) {
+    return []
+  }
+
+  const filled: string[] = []
+
+  for (let index = 0; index < ABOUT_NEWS_BACKGROUND_SLOTS; index += 1) {
+    filled.push(images[index % images.length])
+  }
+
+  return filled
 }
 
 function readCachedAboutStats(): CachedAboutStats | null {
@@ -313,11 +333,13 @@ export function AboutSection() {
           return
         }
 
-        const seen = new Set<string>()
-        const images = (payload.items ?? [])
+        const normalizedImages = (payload.items ?? [])
           .map((item) => item.preview?.image?.trim())
           .filter((image): image is string => typeof image === "string" && image.length > 0)
           .map((image) => normalizeNewsImageUrl(image))
+
+        const seen = new Set<string>()
+        const uniqueNonDefault = normalizedImages
           .filter((image) => {
             if (image === DEFAULT_NEWS_IMAGE || seen.has(image)) {
               return false
@@ -326,9 +348,18 @@ export function AboutSection() {
             seen.add(image)
             return true
           })
-          .slice(0, ABOUT_NEWS_LIMIT)
 
-        setNewsBackgroundImages(images)
+        const selectedImages =
+          uniqueNonDefault.length > 0
+            ? uniqueNonDefault.slice(0, ABOUT_NEWS_LIMIT)
+            : normalizedImages.slice(0, ABOUT_NEWS_LIMIT)
+
+        const proxiedImages =
+          selectedImages.length > 0
+            ? selectedImages.map((image) => buildNewsImageProxyUrl(image))
+            : [buildNewsImageProxyUrl(DEFAULT_NEWS_IMAGE)]
+
+        setNewsBackgroundImages(fillBackgroundSlots(proxiedImages))
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return

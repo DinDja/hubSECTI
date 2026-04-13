@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
 
 import { CreativeProgressBar } from "@/components/creative-progress-bar"
+import { buildImageProxyPath } from "@/lib/image-proxy"
 
 type LinkPreview = {
   url: string
@@ -164,14 +165,14 @@ function normalizePreviewImageUrl(rawUrl: string) {
 
 function buildImageProxyUrl(rawUrl: string) {
   const normalizedUrl = normalizePreviewImageUrl(rawUrl)
-  return `/api/hub/image-proxy?url=${encodeURIComponent(normalizedUrl)}`
+  return buildImageProxyPath(normalizedUrl)
 }
 
 function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: string }) {
+  const proxyImageUrl = buildImageProxyUrl(preview.image)
   const directImageUrl = normalizePreviewImageUrl(preview.image)
-  const proxyImageUrl = buildImageProxyUrl(directImageUrl)
+  const fallbackProxyImageUrl = buildImageProxyUrl(DEFAULT_PREVIEW_IMAGE)
   const fallbackImageUrl = normalizePreviewImageUrl(DEFAULT_PREVIEW_IMAGE)
-  const fallbackProxyImageUrl = buildImageProxyUrl(fallbackImageUrl)
 
   return (
     <div
@@ -180,29 +181,29 @@ function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: stri
     >
       <div className="relative h-24 w-full flex-shrink-0 overflow-hidden bg-slate-100 md:h-28">
         <img
-          src={directImageUrl}
+          src={proxyImageUrl}
           alt={preview.title}
           loading="lazy"
           referrerPolicy="no-referrer"
           className="h-full w-full object-cover"
           onError={(event) => {
-            const currentMode = event.currentTarget.dataset.loadMode ?? "direct"
-
-            if (currentMode === "direct") {
-              event.currentTarget.dataset.loadMode = "proxy"
-              event.currentTarget.src = proxyImageUrl
-              return
-            }
+            const currentMode = event.currentTarget.dataset.loadMode ?? "proxy"
 
             if (currentMode === "proxy") {
-              event.currentTarget.dataset.loadMode = "fallback"
-              event.currentTarget.src = fallbackImageUrl
+              event.currentTarget.dataset.loadMode = "direct"
+              event.currentTarget.src = directImageUrl
               return
             }
 
-            if (currentMode === "fallback") {
+            if (currentMode === "direct") {
               event.currentTarget.dataset.loadMode = "fallback-proxy"
               event.currentTarget.src = fallbackProxyImageUrl
+              return
+            }
+
+            if (currentMode === "fallback-proxy") {
+              event.currentTarget.dataset.loadMode = "fallback"
+              event.currentTarget.src = fallbackImageUrl
             }
           }}
         />
