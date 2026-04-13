@@ -54,6 +54,11 @@ const ABOUT_CACHE_KEY = "hub_about_stats_cache_v1"
 const DEFAULT_ENTIDADES_FALLBACK = 500
 const ABOUT_NEWS_LIMIT = 6
 
+function buildNewsImageProxyUrl(rawUrl: string) {
+  const normalizedUrl = rawUrl.trim()
+  return `/api/hub/image-proxy?url=${encodeURIComponent(normalizedUrl)}`
+}
+
 function readCachedAboutStats(): CachedAboutStats | null {
   if (typeof window === "undefined") return null
 
@@ -284,9 +289,10 @@ export function AboutSection() {
         }
 
         const images = (payload.items ?? [])
-          .map((item) => item.preview?.image)
+          .map((item) => item.preview?.image?.trim())
           .filter((image): image is string => typeof image === "string" && image.length > 0)
           .slice(0, ABOUT_NEWS_LIMIT)
+          .map((image) => buildNewsImageProxyUrl(image))
 
         setNewsBackgroundImages(images)
       } catch (error) {

@@ -162,8 +162,14 @@ function normalizePreviewImageUrl(rawUrl: string) {
   }
 }
 
+function buildImageProxyUrl(rawUrl: string) {
+  const normalizedUrl = normalizePreviewImageUrl(rawUrl)
+  return `/api/hub/image-proxy?url=${encodeURIComponent(normalizedUrl)}`
+}
+
 function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: string }) {
-  const imageUrl = normalizePreviewImageUrl(preview.image)
+  const imageUrl = buildImageProxyUrl(preview.image)
+  const fallbackImageUrl = buildImageProxyUrl(DEFAULT_PREVIEW_IMAGE)
 
   return (
     <div
@@ -178,11 +184,12 @@ function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: stri
           referrerPolicy="no-referrer"
           className="h-full w-full object-cover"
           onError={(event) => {
-            if (event.currentTarget.src === DEFAULT_PREVIEW_IMAGE) {
+            if (event.currentTarget.dataset.fallbackApplied === "true") {
               return
             }
 
-            event.currentTarget.src = DEFAULT_PREVIEW_IMAGE
+            event.currentTarget.dataset.fallbackApplied = "true"
+            event.currentTarget.src = fallbackImageUrl
           }}
         />
       </div>
