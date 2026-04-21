@@ -122,4 +122,24 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent !important;
+  }
 }

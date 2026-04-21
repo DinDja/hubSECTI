@@ -1,9 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
-import { ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
-
-import { CreativeProgressBar } from "@/components/creative-progress-bar"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { ArrowLeft, ArrowRight, ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
 import { buildImageProxyPath } from "@/lib/image-proxy"
 
 type LinkPreview = {
@@ -230,8 +228,7 @@ function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: stri
 }
 
 export function SectiTimelineSection() {
-  const sectionRef = useRef<HTMLElement | null>(null)
-  const [scrollProgress, setScrollProgress] = useState(0)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
   const [events, setEvents] = useState<TimelineEvent[]>(FALLBACK_TIMELINE_EVENTS)
   const [isLoadingNews, setIsLoadingNews] = useState(true)
   const [isLiveFeed, setIsLiveFeed] = useState(false)
@@ -239,6 +236,27 @@ export function SectiTimelineSection() {
   const [newsLimit, setNewsLimit] = useState(INITIAL_NEWS_LIMIT)
   const [isFetchingMore, setIsFetchingMore] = useState(false)
   const [hasMoreNews, setHasMoreNews] = useState(true)
+  const [canScrollPrev, setCanScrollPrev] = useState(false)
+  const [canScrollNext, setCanScrollNext] = useState(false)
+
+  const updateScrollButtons = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    setCanScrollPrev(el.scrollLeft > 0)
+    setCanScrollNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }, [])
+
+  const scrollList = useCallback((direction: "prev" | "next") => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const card = el.querySelector<HTMLElement>("[data-timeline-card]")
+    const step = (card?.offsetWidth ?? 360) + 24
+    const target = direction === "next" ? el.scrollLeft + step : el.scrollLeft - step
+
+    el.scrollTo({ left: target, behavior: "smooth" })
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -317,61 +335,6 @@ export function SectiTimelineSection() {
     }
   }, [newsLimit])
 
-  const handleScroll = useCallback(() => {
-    const section = sectionRef.current
-    if (!section) return
-
-    const rect = section.getBoundingClientRect()
-    const viewportHeight = window.innerHeight
-    const sectionHeight = section.offsetHeight - viewportHeight
-    
-    const scrolled = -rect.top
-    const progress = Math.max(0, Math.min(1, scrolled / sectionHeight))
-    
-    setScrollProgress(progress)
-  }, [])
-
-  useEffect(() => {
-    let rafId: number
-    let ticking = false
-
-    const onScroll = () => {
-      if (!ticking) {
-        rafId = requestAnimationFrame(() => {
-          handleScroll()
-          ticking = false
-        })
-        ticking = true
-      }
-    }
-
-    handleScroll()
-    window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll, { passive: true })
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId)
-      window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
-    }
-  }, [handleScroll])
-
-  const handleSkip = useCallback(() => {
-    const section = sectionRef.current
-    if (!section) return
-    const total = events.length
-    if (total === 0) return
-
-    const currentIndex = Math.min(total - 1, Math.floor(scrollProgress * total))
-    const nextIndex = Math.min(total - 1, currentIndex + 1)
-
-    const viewportHeight = window.innerHeight
-    const sectionHeight = Math.max(0, section.offsetHeight - viewportHeight)
-    const progress = Math.max(0, Math.min(1, nextIndex / total))
-    const targetY = section.offsetTop + progress * sectionHeight
-
-    window.scrollTo({ top: targetY, behavior: "smooth" })
-  }, [events, scrollProgress])
 
   const handleLoadMore = useCallback(() => {
     if (isLoadingNews || isFetchingMore || !hasMoreNews) {
@@ -381,218 +344,183 @@ export function SectiTimelineSection() {
     setNewsLimit((currentLimit) => Math.min(MAX_NEWS_LIMIT, currentLimit + NEWS_LIMIT_STEP))
   }, [hasMoreNews, isFetchingMore, isLoadingNews])
 
-  const totalCards = events.length
-  const cardWidth = 380
-  const gap = 24
-  const maxTranslate = Math.max(0, (totalCards - 1) * (cardWidth + gap))
-  const activeIndex =
-    totalCards === 0 ? 0 : Math.min(totalCards - 1, Math.floor(scrollProgress * totalCards))
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    updateScrollButtons()
+    el.addEventListener("scroll", updateScrollButtons, { passive: true })
+    window.addEventListener("resize", updateScrollButtons)
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollButtons)
+      window.removeEventListener("resize", updateScrollButtons)
+    }
+  }, [updateScrollButtons])
 
   return (
-    <section
-      ref={sectionRef}
-      id="linha-do-tempo-secti"
-      className="relative"
-      style={{ height: `${250 + Math.max(totalCards, 1) * 80}vh` }}
-    >
-      {/* Sticky container */}
-      <div className="sticky top-0 flex h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-[#F4F8FC] via-white to-[#F9FBF6]">
-        {/* Background decorations */}
-        <div className="pointer-events-none absolute inset-0">
-          <div 
-            className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#00B5AD]/10 blur-3xl"
-            style={{ transform: `translateX(${scrollProgress * 100}px)` }}
-          />
-          <div 
-            className="absolute right-[-5rem] top-1/3 h-80 w-80 rounded-full bg-[#0077C0]/10 blur-3xl"
-            style={{ transform: `translateX(${-scrollProgress * 80}px)` }}
-          />
-          <div 
-            className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-[#7AC143]/10 blur-3xl"
-            style={{ transform: `translateY(${-scrollProgress * 60}px)` }}
-          />
-        </div>
+    <section id="linha-do-tempo-secti" className="relative overflow-hidden bg-[#F4F8FC] py-16">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#00B5AD]/10 blur-3xl" />
+        <div className="absolute right-[-5rem] top-1/3 h-80 w-80 rounded-full bg-[#0077C0]/10 blur-3xl" />
+        <div className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-[#7AC143]/10 blur-3xl" />
+      </div>
 
-        {/* Header */}
-        <div className="relative z-10 px-6 pt-8 md:px-12 md:pt-12 lg:px-16">
-          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700 shadow-sm">
-            Linha do Tempo
+      <div className="relative z-10 px-6 pt-8 md:px-12 md:pt-12 lg:px-16">
+        <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700 shadow-sm">
+          Linha do Tempo
+        </span>
+        <h2 className="mt-5 text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl lg:text-6xl">
+          Ultimos acontecimentos
+          <br />
+          <span className="bg-gradient-to-r from-[#0077C0] via-[#00B5AD] to-[#7AC143] bg-clip-text text-transparent">
+            SECTI
           </span>
-          <h2 className="mt-5 text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl lg:text-6xl">
-            Ultimos acontecimentos
-            <br />
-            <span className="bg-gradient-to-r from-[#0077C0] via-[#00B5AD] to-[#7AC143] bg-clip-text text-transparent">
-              SECTI
-            </span>
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
-            Acompanhe as principais notícias e ações da Secretaria de Ciência, Tecnologia e Inovação da Bahia.
-          </p>
-          <p aria-live="polite" className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            {isLoadingNews
-              ? "Atualizando notícias do portal institucional..."
-              : isFetchingMore
-                ? "Buscando mais notícias da SECTI..."
-                : isLiveFeed
-                  ? `Feed atualizado automaticamente as ${lastRefreshLabel ?? "agora"}`
-                  : "Modo offline: exibindo notícias salvas"}
-          </p>
+        </h2>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
+          Acompanhe as principais notícias e ações da Secretaria de Ciência, Tecnologia e Inovação da Bahia.
+        </p>
+        <p aria-live="polite" className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          {isLoadingNews
+            ? "Atualizando notícias do portal institucional..."
+            : isFetchingMore
+              ? "Buscando mais notícias da SECTI..."
+              : isLiveFeed
+                ? `Feed atualizado automaticamente às ${lastRefreshLabel ?? "agora"}`
+                : "Modo offline: exibindo notícias salvas"}
+        </p>
+      </div>
+
+      <div className="relative z-10 mt-10 px-6 md:px-12 lg:px-16">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <p className="text-sm text-slate-500">Arraste ou use as setas para navegar pelas notícias</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => scrollList("prev")}
+              disabled={!canScrollPrev}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Notícias anteriores"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollList("next")}
+              disabled={!canScrollNext}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Próximas notícias"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="relative z-10 mt-6 px-6 md:mt-8 md:px-12 lg:px-16">
-          <CreativeProgressBar
-            progress={scrollProgress}
-            activeIndex={activeIndex}
-            totalCards={totalCards}
-          />
-        </div>
-
-        {/* Timeline cards container */}
-        <div 
-          className="relative z-10 mt-6 flex-1 overflow-hidden md:mt-8"
-          style={{ perspective: '1500px', perspectiveOrigin: '20% 50%' }}
+        <div
+          ref={scrollRef}
+          className="hide-scrollbar flex gap-6 overflow-x-auto pb-6 pr-6 scroll-smooth scroll-px-4 snap-x snap-mandatory"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
         >
-          <div 
-            className="flex h-full items-center gap-6 pl-6 md:pl-12 lg:pl-16"
-            style={{ 
-              transform: `translateX(${-scrollProgress * maxTranslate}px)`,
-              transition: 'transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)'
-            }}
-          >
-            {events.map((event, index) => {
-              const isActive = index === activeIndex
-              const isPast = index < activeIndex
-              const markerColor = eventColors[index % eventColors.length]
-              
-              const distanceFromActive = index - activeIndex
-              const zOffset = isActive ? 60 : Math.max(0, 30 - Math.abs(distanceFromActive) * 15)
-              const rotateY = distanceFromActive * -1.5
-              const scale = isActive ? 1 : 0.94
-              const opacity = isActive ? 1 : isPast ? 0.6 : 0.5
+          {events.map((event, index) => {
+            const markerColor = eventColors[index % eventColors.length]
 
-              return (
-                <article
-                  key={event.href}
-                  className="relative flex h-[calc(100%-32px)] w-[340px] flex-shrink-0 flex-col overflow-hidden rounded-2xl border bg-white shadow-lg md:w-[380px]"
-                  style={{
-                    transform: `translateZ(${zOffset}px) rotateY(${rotateY}deg) scale(${scale})`,
-                    opacity,
-                    borderColor: isActive ? markerColor : '#e2e8f0',
-                    boxShadow: isActive 
-                      ? `0 20px 40px -15px rgba(0,0,0,0.2), 0 0 0 2px ${markerColor}40`
-                      : '0 4px 20px -5px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease'
-                  }}
-                >
-                  {/* Color accent - top bar only */}
-                  <div 
-                    className="h-1.5 w-full flex-shrink-0"
-                    style={{ backgroundColor: markerColor }}
-                  />
+            return (
+              <div
+                key={event.href}
+                data-timeline-card
+                className="snap-start flex-shrink-0 w-[min(100%,320px)] sm:w-[min(50%,380px)] lg:w-[min(33.333%,380px)] xl:w-[min(25%,380px)]"
+              >
+                <article className="relative flex min-h-[450px] max-h-[450px] flex-col overflow-hidden rounded-2xl border bg-white shadow-lg">
+                    <div className="h-1.5 w-full flex-shrink-0" style={{ backgroundColor: markerColor }} />
 
-                  <div className="flex min-h-0 flex-1 flex-col p-4 md:p-5">
-                    {/* Header */}
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <span 
-                        className="inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white"
-                        style={{ backgroundColor: markerColor }}
-                      >
-                        {event.date}
-                      </span>
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                        {event.source}
-                      </span>
+                    <div className="flex min-h-0 flex-1 flex-col p-4 md:p-5">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <span
+                          className="inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white"
+                          style={{ backgroundColor: markerColor }}
+                        >
+                          {event.date}
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          {event.source}
+                        </span>
+                      </div>
+
+                      <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 md:text-lg">
+                        {event.title}
+                      </h3>
+
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                        {event.description}
+                      </p>
+
+                      <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                        <LinkPreviewCard preview={event.preview} color={markerColor} />
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <a
+                          href={event.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                          style={{ color: markerColor }}
+                        >
+                          Ler mais
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </a>
+                        <span
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{ backgroundColor: `${markerColor}15`, color: markerColor }}
+                        >
+                          {index + 1}
+                        </span>
+                      </div>
                     </div>
-
-                    {/* Title */}
-                    <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 md:text-lg">
-                      {event.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
-                      {event.description}
-                    </p>
-
-                    {/* Link Preview */}
-                    <div className="mt-3 min-h-0 flex-1 overflow-hidden">
-                      <LinkPreviewCard preview={event.preview} color={markerColor} />
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <a
-                        href={event.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
-                        style={{ color: markerColor }}
-                      >
-                        Ler mais
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </a>
-                      <span 
-                        className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
-                        style={{ backgroundColor: `${markerColor}15`, color: markerColor }}
-                      >
-                        {index + 1}
-                      </span>
-                    </div>
-                  </div>
-                </article>
+                  </article>
+                </div>
               )
             })}
-
-            {/* End spacer */}
-            <div className="w-[40vw] flex-shrink-0" />
           </div>
-        </div>
+      </div>
 
-        {/* Bottom bar */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-white/80 px-6 py-4 backdrop-blur-sm md:px-12 lg:px-16">
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="text-xs text-slate-500 md:text-sm">
-              Role para explorar a linha do tempo
-            </p>
-            <button
-              type="button"
-              onClick={handleSkip}
-              disabled={totalCards <= 1 || activeIndex >= totalCards - 1}
-              aria-label="Pular para próxima notícia"
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-2"
-            >
-              Pular notícia
-            </button>
-            <button
-              type="button"
-              onClick={handleLoadMore}
-              disabled={isLoadingNews || isFetchingMore || !hasMoreNews}
-              aria-label="Ver mais notícias da SECTI"
-              className="inline-flex items-center gap-2 rounded-full border border-[#0077C0]/20 bg-[#0077C0]/5 px-3 py-1.5 text-xs font-semibold text-[#0077C0] transition-all hover:border-[#0077C0] hover:bg-[#0077C0]/10 disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-2"
-            >
-              {isFetchingMore ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Buscando...
-                </>
-              ) : hasMoreNews ? (
-                "Ver mais notícias"
-              ) : (
-                "Todas carregadas"
-              )}
-            </button>
-          </div>
-          <a
-            href="https://www.instagram.com/sectibahia/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:border-[#EC008C] hover:text-[#EC008C] md:px-4 md:py-2 md:text-sm"
+      <div className="relative z-10 mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-white/80 px-6 py-4 backdrop-blur-sm md:px-12 lg:px-16">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-xs text-slate-500 md:text-sm">
+            Use as setas para navegar entre as notícias
+          </p>
+          <button
+            type="button"
+            onClick={handleLoadMore}
+            disabled={isLoadingNews || isFetchingMore || !hasMoreNews}
+            aria-label="Ver mais notícias da SECTI"
+            className="inline-flex items-center gap-2 rounded-full border border-[#0077C0]/20 bg-[#0077C0]/5 px-3 py-1.5 text-xs font-semibold text-[#0077C0] transition-all hover:border-[#0077C0] hover:bg-[#0077C0]/10 disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-2"
           >
-            <Instagram className="h-4 w-4" />
-            @sectibahia
-          </a>
+            {isFetchingMore ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Buscando...
+              </>
+            ) : hasMoreNews ? (
+              "Ver mais notícias"
+            ) : (
+              "Todas carregadas"
+            )}
+          </button>
         </div>
+        <a
+          href="https://www.instagram.com/sectibahia/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:border-[#EC008C] hover:text-[#EC008C] md:px-4 md:py-2 md:text-sm"
+        >
+          <Instagram className="h-4 w-4" />
+          @sectibahia
+        </a>
       </div>
     </section>
   )

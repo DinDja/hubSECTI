@@ -41,6 +41,14 @@ const systems = [
     category: "gestao",
   },
   {
+    title: "Sistema de Inventários SECTI",
+    description: "Gestão de inventário integrado para os ativos, materiais e recursos da secretaria.",
+    url: "https://sectinventario.netlify.app/",
+    icon: FolderKanban,
+    color: colors.blue,
+    category: "gestao",
+  },
+  {
     title: "Painel Conecta Bahia",
     description: "Painel de visualização e monitoramento dos projetos de conectividade em toda a Bahia.",
     url: "https://conectabahia.netlify.app/",
