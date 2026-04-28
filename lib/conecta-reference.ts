@@ -1,5 +1,5 @@
 export const CONECTA_REFERENCE_TOTALS = {
-  municipalitiesCount: 348,
+  municipalitiesCount: 359,
   territoriesCount: 27,
-  installedPointsCount: 768,
+  installedPointsCount: 825,
 } as const

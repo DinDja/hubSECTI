@@ -38,9 +38,26 @@ type TerritorialApiResponse = {
   }>
 }
 
+type ConectaCoverageStats = {
+  territoriesCount: number
+  municipalitiesCount: number
+  installedPointsCount: number
+}
+
+type ConectaSummaryApiResponse = {
+  summary?: {
+    territoriesCount?: number
+    municipalitiesCount?: number
+    installedPointsCount?: number
+  }
+}
+
 type CachedAboutStats = {
   totalEntidades: number
   assistenciaTerritorios: number
+  territoriesConecta?: number
+  municipalitiesConecta?: number
+  installedPointsConecta?: number
 }
 
 type AboutNewsApiResponse = {
@@ -55,8 +72,33 @@ const ABOUT_CACHE_KEY = "hub_about_stats_cache_v1"
 const DEFAULT_ENTIDADES_FALLBACK = 500
 const ABOUT_NEWS_LIMIT = 6
 const ABOUT_NEWS_BACKGROUND_SLOTS = 6
+const ABOUT_STATS_REFRESH_INTERVAL_MS = 60 * 1000
+const DEFAULT_CONECTA_STATS: ConectaCoverageStats = {
+  territoriesCount: CONECTA_REFERENCE_TOTALS.territoriesCount,
+  municipalitiesCount: CONECTA_REFERENCE_TOTALS.municipalitiesCount,
+  installedPointsCount: CONECTA_REFERENCE_TOTALS.installedPointsCount,
+}
 const DEFAULT_NEWS_IMAGE =
   "https://www.ba.gov.br/secti/modules/custom/bagov_base_blocks/assets/images/logo-governo-rodape.png"
+
+function mergeConectaStats(current: ConectaCoverageStats, fallback: ConectaCoverageStats): ConectaCoverageStats {
+  return {
+    territoriesCount: current.territoriesCount > 0 ? current.territoriesCount : fallback.territoriesCount,
+    municipalitiesCount: current.municipalitiesCount > 0 ? current.municipalitiesCount : fallback.municipalitiesCount,
+    installedPointsCount: current.installedPointsCount > 0 ? current.installedPointsCount : fallback.installedPointsCount,
+  }
+}
+
+function getConectaStatsFromCache(stats?: CachedAboutStats | null): ConectaCoverageStats {
+  return mergeConectaStats(
+    {
+      territoriesCount: Number(stats?.territoriesConecta || 0),
+      municipalitiesCount: Number(stats?.municipalitiesConecta || 0),
+      installedPointsCount: Number(stats?.installedPointsConecta || 0),
+    },
+    DEFAULT_CONECTA_STATS,
+  )
+}
 
 function normalizeNewsImageUrl(rawUrl: string) {
   const trimmed = rawUrl.trim()
@@ -120,6 +162,9 @@ function readCachedAboutStats(): CachedAboutStats | null {
     return {
       totalEntidades: parsed.totalEntidades,
       assistenciaTerritorios: typeof parsed.assistenciaTerritorios === "number" ? parsed.assistenciaTerritorios : 0,
+      territoriesConecta: typeof parsed.territoriesConecta === "number" ? parsed.territoriesConecta : undefined,
+      municipalitiesConecta: typeof parsed.municipalitiesConecta === "number" ? parsed.municipalitiesConecta : undefined,
+      installedPointsConecta: typeof parsed.installedPointsConecta === "number" ? parsed.installedPointsConecta : undefined,
     }
   } catch {
     return null
@@ -136,16 +181,16 @@ function saveCachedAboutStats(stats: CachedAboutStats) {
   }
 }
 
-function buildStats(totalEntidades: number): StatItem[] {
+function buildStats(totalEntidades: number, conectaStats: ConectaCoverageStats): StatItem[] {
   return [
-    { value: CONECTA_REFERENCE_TOTALS.territoriesCount, suffix: "", label: "Territórios Conecta", color: colors.cyan },
-    { value: CONECTA_REFERENCE_TOTALS.municipalitiesCount, suffix: "", label: "Municípios Conecta", color: colors.green },
+    { value: conectaStats.territoriesCount, suffix: "", label: "Territórios Conecta", color: colors.cyan },
+    { value: conectaStats.municipalitiesCount, suffix: "", label: "Municípios Conecta", color: colors.green },
     { value: totalEntidades, suffix: "", label: "Entidades Mapeadas", color: colors.orange },
-    { value: CONECTA_REFERENCE_TOTALS.installedPointsCount, suffix: "", label: "Praças Instaladas", color: colors.magenta },
+    { value: conectaStats.installedPointsCount, suffix: "", label: "Praças Instaladas", color: colors.magenta },
   ]
 }
 
-const defaultStats = buildStats(DEFAULT_ENTIDADES_FALLBACK)
+const defaultStats = buildStats(DEFAULT_ENTIDADES_FALLBACK, DEFAULT_CONECTA_STATS)
 
 const values = [
   {
@@ -192,6 +237,11 @@ function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string })
   const [hasAnimated, setHasAnimated] = useState(false)
 
   useEffect(() => {
+    if (hasAnimated) {
+      setCount(end)
+      return
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !hasAnimated) {
@@ -239,10 +289,11 @@ function FloatingShape({ color, size, top, left, delay }: {
 
 export function AboutSection() {
   const initialCachedStats = readCachedAboutStats()
+  const initialCachedConectaStats = getConectaStatsFromCache(initialCachedStats)
   const [hoveredStat, setHoveredStat] = useState<number | null>(null)
   const [newsBackgroundImages, setNewsBackgroundImages] = useState<string[]>([])
   const [liveStats, setLiveStats] = useState<StatItem[]>(() =>
-    buildStats(initialCachedStats?.totalEntidades ?? DEFAULT_ENTIDADES_FALLBACK),
+    buildStats(initialCachedStats?.totalEntidades ?? DEFAULT_ENTIDADES_FALLBACK, initialCachedConectaStats),
   )
   const [dataStatus, setDataStatus] = useState<"loading" | "ready" | "cached" | "error">(
     initialCachedStats ? "cached" : "loading",
@@ -251,16 +302,74 @@ export function AboutSection() {
 
   useEffect(() => {
     let active = true
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null
+    let isFetching = false
+
+    const scheduleNextRefresh = () => {
+      if (!active) {
+        return
+      }
+
+      refreshTimer = setTimeout(() => {
+        void loadStatsFromSources()
+      }, ABOUT_STATS_REFRESH_INTERVAL_MS)
+    }
 
     const loadStatsFromSources = async () => {
-      try {
-        const territoriosRes = await fetch("/api/hub/territorios", { cache: "no-store" })
+      if (isFetching || !active) {
+        return
+      }
 
+      isFetching = true
+
+      try {
+        const requestTimestamp = Date.now()
+        const [territoriosFetch, conectaFetch] = await Promise.allSettled([
+          fetch(`/api/hub/territorios?nocache=true&ts=${requestTimestamp}`, {
+            cache: "no-store",
+            headers: {
+              Accept: "application/json",
+            },
+          }),
+          fetch(`/api/hub/conecta-resumo?nocache=true&ts=${requestTimestamp}`, {
+            cache: "no-store",
+            headers: {
+              Accept: "application/json",
+            },
+          }),
+        ])
+
+        if (territoriosFetch.status === "rejected") {
+          throw new Error("Falha ao carregar dados de SECTI Territorios.")
+        }
+
+        const territoriosRes = territoriosFetch.value
         if (!territoriosRes.ok) {
-          throw new Error("Falha ao carregar dados das fontes integradas.")
+          throw new Error(`Falha ao carregar dados de SECTI Territorios (HTTP ${territoriosRes.status}).`)
         }
 
         const territoriosData = (await territoriosRes.json()) as TerritorialApiResponse
+        const cachedStatsSnapshot = readCachedAboutStats() ?? initialCachedStats
+        const conectaFallbackStats = getConectaStatsFromCache(cachedStatsSnapshot)
+        let conectaStats = conectaFallbackStats
+
+        if (conectaFetch.status === "fulfilled") {
+          if (conectaFetch.value.ok) {
+            const conectaData = (await conectaFetch.value.json()) as ConectaSummaryApiResponse
+            const summary = conectaData.summary
+            const conectaCoverage: ConectaCoverageStats = {
+              territoriesCount: Number(summary?.territoriesCount || 0),
+              municipalitiesCount: Number(summary?.municipalitiesCount || 0),
+              installedPointsCount: Number(summary?.installedPointsCount || 0),
+            }
+
+            conectaStats = mergeConectaStats(conectaCoverage, conectaFallbackStats)
+          } else {
+            console.warn(`[AboutSection] Falha ao carregar Conecta Bahia (HTTP ${conectaFetch.value.status}).`)
+          }
+        } else {
+          console.warn("[AboutSection] Erro ao buscar Conecta Bahia:", conectaFetch.reason)
+        }
 
         if (!active) return
 
@@ -269,17 +378,20 @@ export function AboutSection() {
           (territoriosData.territories || []).reduce((sum, item) => sum + Number(item?.capacidade?.entidadesTotal || 0), 0)
         const totalEntidades = totalEntidadesRaw > 0
           ? totalEntidadesRaw
-          : initialCachedStats?.totalEntidades || DEFAULT_ENTIDADES_FALLBACK
+          : cachedStatsSnapshot?.totalEntidades || DEFAULT_ENTIDADES_FALLBACK
         const totalAssistencia = (territoriosData.territories || []).filter(
           (item) => item?.assistenciaPublica?.existe,
         ).length
 
-        setLiveStats(buildStats(totalEntidades))
+        setLiveStats(buildStats(totalEntidades, conectaStats))
         setAssistenciaTerritorios(totalAssistencia)
 
         saveCachedAboutStats({
           totalEntidades,
           assistenciaTerritorios: totalAssistencia,
+          territoriesConecta: conectaStats.territoriesCount,
+          municipalitiesConecta: conectaStats.municipalitiesCount,
+          installedPointsConecta: conectaStats.installedPointsCount,
         })
 
         setDataStatus("ready")
@@ -291,7 +403,7 @@ export function AboutSection() {
         const cached = readCachedAboutStats()
 
         if (cached) {
-          setLiveStats(buildStats(cached.totalEntidades))
+          setLiveStats(buildStats(cached.totalEntidades, getConectaStatsFromCache(cached)))
           setAssistenciaTerritorios(cached.assistenciaTerritorios)
           setDataStatus("cached")
           return
@@ -299,13 +411,20 @@ export function AboutSection() {
 
         setLiveStats(defaultStats)
         setDataStatus("error")
+      } finally {
+        isFetching = false
+        scheduleNextRefresh()
       }
     }
 
-    loadStatsFromSources()
+    void loadStatsFromSources()
 
     return () => {
       active = false
+
+      if (refreshTimer !== null) {
+        clearTimeout(refreshTimer)
+      }
     }
   }, [])
 

@@ -4,11 +4,22 @@ import { useEffect, useState } from "react"
 import { MapPinned, Network, RadioTower, RefreshCcw } from "lucide-react"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
 
+type ConectaSummaryApiResponse = {
+  summary?: {
+    municipalitiesCount?: number
+    territoriesCount?: number
+    installedPointsCount?: number
+  }
+}
+
 const numberFormatter = new Intl.NumberFormat("pt-BR")
 
 export function HubIntegracoesSection() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [totalMunicipiosConecta, setTotalMunicipiosConecta] = useState<number>(CONECTA_REFERENCE_TOTALS.municipalitiesCount)
+  const [totalTerritoriosConecta, setTotalTerritoriosConecta] = useState<number>(CONECTA_REFERENCE_TOTALS.territoriesCount)
+  const [totalPracasConecta, setTotalPracasConecta] = useState<number>(CONECTA_REFERENCE_TOTALS.installedPointsCount)
 
   useEffect(() => {
     let active = true
@@ -18,13 +29,33 @@ export function HubIntegracoesSection() {
       setIsLoading(true)
 
       try {
-        const conectaRes = await fetch("/api/hub/conecta?filterMode=ambos", { cache: "no-store" })
+        const conectaRes = await fetch(`/api/hub/conecta-resumo?nocache=true&ts=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+          },
+        })
 
         if (!conectaRes.ok) {
           throw new Error(`Falha ao carregar dados do Conecta Bahia (HTTP ${conectaRes.status}).`)
         }
 
+        const conectaData = (await conectaRes.json()) as ConectaSummaryApiResponse
+        const summary = conectaData.summary
+
         if (!active) return
+
+        if (Number(summary?.municipalitiesCount || 0) > 0) {
+          setTotalMunicipiosConecta(Number(summary?.municipalitiesCount))
+        }
+
+        if (Number(summary?.territoriesCount || 0) > 0) {
+          setTotalTerritoriosConecta(Number(summary?.territoriesCount))
+        }
+
+        if (Number(summary?.installedPointsCount || 0) > 0) {
+          setTotalPracasConecta(Number(summary?.installedPointsCount))
+        }
       } catch (err) {
         if (!active) return
 
@@ -42,10 +73,6 @@ export function HubIntegracoesSection() {
       active = false
     }
   }, [])
-
-  const totalMunicipiosConecta = CONECTA_REFERENCE_TOTALS.municipalitiesCount
-  const totalTerritoriosConecta = CONECTA_REFERENCE_TOTALS.territoriesCount
-  const totalPracasConecta = CONECTA_REFERENCE_TOTALS.installedPointsCount
 
   return (
     <section id="integracoes" className="relative py-15 overflow-hidden">
