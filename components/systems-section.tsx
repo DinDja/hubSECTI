@@ -11,6 +11,7 @@ import {
   BarChart3,
   Sparkles,
   Globe,
+  Users
 } from "lucide-react"
 
 const colors = {
@@ -90,12 +91,36 @@ const systems = [
     category: "comunicacao",
   },
   {
+    title: "Espaços Dinamizadores",
+    description: "Plataforma para fomentar a colaboração e o intercâmbio de ideias entre os atores do ecossistema de inovação.",
+    url: "http://espacodinamizador.secti.ba.gov.br/",
+    icon: Users,
+    color: colors.red,
+    category: "comunicacao",
+  },
+  {
     title: "Painel SECTI Territórios",
     description: "Painel de mapas e indicadores territoriais que mostra a atuação da secretaria por região.",
     url: "https://secti-territorios.netlify.app/",
     icon: Building2,
     color: colors.blue,
     category: "dados",
+  },
+  {
+    title: "Conecta Clube",
+    description: "O Conecta Clube é uma plataforma web para apoiar a gestão e visibilidade de projetos científicos nas escolas públicas estaduais e municipais da Bahia. Reúne num só lugar: feed colaborativo de projetos, perfis de clubes, diário de bordo, biblioteca de domínio público, fórum de discussão, agenda de eventos, trilha pedagógica e um conjunto de ferramentas de apoio ao processo de registro de propriedade intelectual no INPI.",
+    url: "https://conectaclube.netlify.app/",
+    icon: GraduationCap,
+    color: colors.green,
+    category: "pesquisa",
+  },
+  {
+    title: "Busca de Patentes",
+    description: "Plataforma para pesquisa e consulta de patentes, promovendo o acesso à informação tecnológica e incentivando a inovação.",
+    url: "https://patentes-search.vercel.app/",
+    icon: Sparkles,
+    color: colors.orange,
+    category: "pesquisa",
   },
 ]
 
