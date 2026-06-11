@@ -102,7 +102,7 @@ const systems = [
   {
     title: "Painel SECTI Territórios",
     description: "Sistema de auxílio à solicitação de patentes.",
-    url: "https://patenteslab.secti.ba.gov.br/",
+    url: "https://secti-territorios.netlify.app/",
     icon: Building2,
     color: colors.blue,
     category: "dados",
