@@ -11,7 +11,8 @@ import {
   BarChart3,
   Sparkles,
   Globe,
-  Users
+  Users,
+  Database
 } from "lucide-react"
 
 const colors = {
@@ -52,7 +53,7 @@ const systems = [
   {
     title: "Painel Conecta Bahia",
     description: "Painel de visualização e monitoramento dos projetos de conectividade em toda a Bahia.",
-    url: "https://conectabahia.netlify.app/",
+    url: "https://conectabahia.secti.ba.gov.br",
 
     icon: Map,
     color: colors.green,
@@ -100,8 +101,8 @@ const systems = [
   },
   {
     title: "Painel SECTI Territórios",
-    description: "Painel de mapas e indicadores territoriais que mostra a atuação da secretaria por região.",
-    url: "https://secti-territorios.netlify.app/",
+    description: "Sistema de auxílio à solicitação de patentes.",
+    url: "https://patenteslab.secti.ba.gov.br/",
     icon: Building2,
     color: colors.blue,
     category: "dados",
@@ -109,7 +110,7 @@ const systems = [
   {
     title: "Conecta Clube",
     description: "O Conecta Clube é uma plataforma web para apoiar a gestão e visibilidade de projetos científicos nas escolas públicas estaduais e municipais da Bahia. Reúne num só lugar: feed colaborativo de projetos, perfis de clubes, diário de bordo, biblioteca de domínio público, fórum de discussão, agenda de eventos, trilha pedagógica e um conjunto de ferramentas de apoio ao processo de registro de propriedade intelectual no INPI.",
-    url: "https://conectaclube.netlify.app/",
+    url: "https://conectaclubes.secti.ba.gov.br/",
     icon: GraduationCap,
     color: colors.green,
     category: "pesquisa",
@@ -121,6 +122,14 @@ const systems = [
     icon: Sparkles,
     color: colors.orange,
     category: "pesquisa",
+  },
+  {
+    title: "PatentesLab SECTI",
+    description: "Portal de dados abertos da SECTI, com conjuntos de dados sobre projetos, investimentos e indicadores de CT&I.",
+    url: "https://dados.secti.ba.gov.br/",
+    icon: Database,
+    color: colors.blue,
+    category: "dados",  
   },
 ]
 
