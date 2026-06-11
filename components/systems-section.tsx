@@ -126,7 +126,7 @@ const systems = [
   {
     title: "PatentesLab SECTI",
     description: "Portal de dados abertos da SECTI, com conjuntos de dados sobre projetos, investimentos e indicadores de CT&I.",
-    url: "https://dados.secti.ba.gov.br/",
+    url: "https://patenteslab.secti.ba.gov.br/",
     icon: Database,
     color: colors.blue,
     category: "dados",  
