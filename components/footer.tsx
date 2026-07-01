@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { ArrowUpRight, ArrowUp, Mail, Phone, MapPin } from "lucide-react"
 import { AnimatedLogo } from "./animated-logo"
-import govbaLogo from "@/app/assets/images/MARCA GOVBA 0126 - DO LADO DA GENTE__H.png"
+import brasao from "@/app/assets/images/brasao-bahia.svg"
 
 const colors = {
   green: "#7AC143",
@@ -77,20 +77,22 @@ export function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 mb-16">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-6 mb-8">
-              <div className="h-12 w-auto">
+            <div className="flex items-start gap-6 mb-8">
+              <div className="h-16 w-auto flex-shrink-0">
                 <Image
-                  src={govbaLogo}
-                  alt="Governo do Estado da Bahia"
-                  style={{ maxWidth: "180px", height: "auto" }}
+                  src={brasao}
+                  alt="Brasão do Estado da Bahia"
+                  style={{ maxWidth: "80px", height: "auto" }}
                   className="h-auto w-auto object-contain"
                 />
               </div>
+              <div className="pt-1">
+                <p className="text-muted-foreground leading-relaxed max-w-md mb-8">
+                  Secretaria de Ciencia, Tecnologia e Inovacao do Estado da Bahia.
+                  Promovendo o desenvolvimento atraves da inovacao e da transformacao digital.
+                </p>
+              </div>
             </div>
-            <p className="text-muted-foreground leading-relaxed max-w-md mb-8">
-              Secretaria de Ciencia, Tecnologia e Inovacao do Estado da Bahia.
-              Promovendo o desenvolvimento atraves da inovacao e da transformacao digital.
-            </p>
           </div>
 
           {/* Links */}

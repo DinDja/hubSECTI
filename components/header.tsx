@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowUpRight, Menu, X } from "lucide-react"
-import govbaLogo from "@/app/assets/images/MARCA GOVBA 0126 - DO LADO DA GENTE__H.png"
+import brasao from "@/app/assets/images/brasao-bahia.svg"
 
 const colors = ["#7AC143", "#00B5AD", "#F7941D", "#0077C0", "#ED1C24", "#EC008C", "#FDB913"]
 
@@ -104,9 +104,9 @@ export function Header() {
           <div className="flex items-center gap-4">
             <div className="hidden sm:block">
               <Image
-                src={govbaLogo}
-                alt="Governo do Estado da Bahia"
-                style={{ maxWidth: "180px", height: "auto" }}
+                src={brasao}
+                alt="Brasão do Estado da Bahia"
+                style={{ maxWidth: "80px", height: "auto" }}
                 className="h-auto w-auto object-contain"
               />
             </div>
