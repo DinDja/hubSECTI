@@ -84,9 +84,9 @@ const systems = [
     category: "gestao",
   },
   {
-    title: "SECTISPEAK",
-    description: "Plataforma de comunicação e voz para iniciativas de inclusão digital e participação cidadã.",
-    url: "https://cloudspeak.netlify.app/",
+    title: "Fala SECTI",
+    description: "Plataforma de comunicação e voz para iniciativas de inclusão digital e participação cidadã. Agora com login obrigatório para criar apresentações e modelos prontos editáveis de apresentações interativas.",
+    url: "https://falasecti.netlify.app",
     icon: Globe,
     color: colors.red,
     category: "comunicacao",
