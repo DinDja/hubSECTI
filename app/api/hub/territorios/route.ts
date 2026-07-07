@@ -5,7 +5,35 @@ const TERRITORIOS_ENDPOINT = "https://secti-territorios.netlify.app/.netlify/fun
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+async function logAccess(ip: string, path: string, userAgent: string) {
+  try {
+    await fetch("/.netlify/functions/log-access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ip,
+        path,
+        userAgent,
+        timestamp: new Date().toISOString(),
+      }),
+      keepalive: true,
+    })
+  } catch (error) {
+    console.error("Failed to log access:", error)
+  }
+}
+
 export async function GET(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0] ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  
+  const userAgent = request.headers.get("user-agent") || "unknown"
+  
+  await logAccess(ip, "/api/hub/territorios", userAgent)
   const url = new URL(request.url)
   const nocache = url.searchParams.get("nocache") === "true"
 

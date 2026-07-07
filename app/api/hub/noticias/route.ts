@@ -15,6 +15,26 @@ const UPSTREAM_HEADERS = {
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+async function logAccess(ip: string, path: string, userAgent: string) {
+  try {
+    await fetch("/.netlify/functions/log-access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ip,
+        path,
+        userAgent,
+        timestamp: new Date().toISOString(),
+      }),
+      keepalive: true,
+    })
+  } catch (error) {
+    console.error("Failed to log access:", error)
+  }
+}
+
 type NewsItem = {
   date: string
   title: string
@@ -269,6 +289,15 @@ async function buildNewsItem(link: string): Promise<NewsItem | null> {
 }
 
 export async function GET(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0] ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  
+  const userAgent = request.headers.get("user-agent") || "unknown"
+  
+  await logAccess(ip, "/api/hub/noticias", userAgent)
+  
   const requestUrl = new URL(request.url)
   const limitParam = Number.parseInt(requestUrl.searchParams.get("limit") ?? "6", 10)
   const limit = Number.isNaN(limitParam) ? 6 : Math.max(1, Math.min(18, limitParam))

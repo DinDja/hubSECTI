@@ -5,7 +5,35 @@ const CONECTA_ENDPOINT = "https://conectabahia.netlify.app/.netlify/functions/sh
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+async function logAccess(ip: string, path: string, userAgent: string) {
+  try {
+    await fetch("/.netlify/functions/log-access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ip,
+        path,
+        userAgent,
+        timestamp: new Date().toISOString(),
+      }),
+      keepalive: true,
+    })
+  } catch (error) {
+    console.error("Failed to log access:", error)
+  }
+}
+
 export async function GET(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0] ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  
+  const userAgent = request.headers.get("user-agent") || "unknown"
+  
+  await logAccess(ip, "/api/hub/conecta", userAgent)
   const url = new URL(request.url)
   const filterMode = url.searchParams.get("filterMode") || "ambos"
   const nocache = url.searchParams.get("nocache") === "true"
