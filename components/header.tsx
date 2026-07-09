@@ -106,8 +106,9 @@ export function Header() {
               <Image
                 src={brasao}
                 alt="Brasão do Estado da Bahia"
-                style={{ maxWidth: "80px", height: "auto" }}
-                className="h-auto w-auto object-contain"
+                width={80}
+                height={80}
+                className="object-contain"
               />
             </div>
           </div>

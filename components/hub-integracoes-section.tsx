@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { MapPinned, Network, RadioTower, RefreshCcw } from "lucide-react"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
+import { useLogAccess } from "@/hooks/use-log-access"
 
 type ConectaSummaryApiResponse = {
   summary?: {
@@ -15,6 +16,8 @@ type ConectaSummaryApiResponse = {
 const numberFormatter = new Intl.NumberFormat("pt-BR")
 
 export function HubIntegracoesSection() {
+  useLogAccess("/integracoes")
+
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [totalMunicipiosConecta, setTotalMunicipiosConecta] = useState<number>(CONECTA_REFERENCE_TOTALS.municipalitiesCount)

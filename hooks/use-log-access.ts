@@ -12,17 +12,16 @@ export function useLogAccess(endpoint?: string) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            ip: "",
             path: window.location.pathname,
-            endpoint: endpoint || window.location.pathname,
+            userAgent: navigator.userAgent,
             timestamp: new Date().toISOString(),
           }),
         })
 
         if (!response.ok) {
-          console.error("Failed to log access")
         }
-      } catch (error) {
-        console.error("Error logging access:", error)
+      } catch {
       }
     }
 

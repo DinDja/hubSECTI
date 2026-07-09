@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import { ArrowLeft, ArrowRight, ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
 import { buildImageProxyPath } from "@/lib/image-proxy"
+import { useLogAccess } from "@/hooks/use-log-access"
 
 type LinkPreview = {
   url: string
@@ -228,6 +229,8 @@ function LinkPreviewCard({ preview, color }: { preview: LinkPreview; color: stri
 }
 
 export function SectiTimelineSection() {
+  useLogAccess("/linha-do-tempo")
+
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [events, setEvents] = useState<TimelineEvent[]>(FALLBACK_TIMELINE_EVENTS)
   const [isLoadingNews, setIsLoadingNews] = useState(true)

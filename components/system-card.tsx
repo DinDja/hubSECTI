@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { createPortal } from "react-dom"
 import Image, { type StaticImageData } from "next/image"
 import { ArrowUpRight, Maximize2, X, ExternalLink, Loader2 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -28,6 +29,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
   const [previewIndex, setPreviewIndex] = useState(0)
   const [iframeAllowed, setIframeAllowed] = useState<boolean | null>(null)
   const [iframeCheckError, setIframeCheckError] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const previewCandidates = useMemo<Array<string | StaticImageData>>(() => {
     if (image) {
       return [image]
@@ -36,6 +38,10 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
     return [getMshotsPreview(url)]
   }, [image, url])
   const previewSrc = previewCandidates[previewIndex] ?? previewCandidates[0]
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isExpanded) {
@@ -245,14 +251,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
     </p>
   )}
 
-  {title === "Fala SECTI" && (
-    <div className="mt-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-      <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
-        ⚠️ Novidade: Agora exige login para criar apresentações e conta com modelos prontos editáveis.
-      </p>
-    </div>
-  )}
-
+          
           <a
             href={url}
             target="_blank"
@@ -267,9 +266,9 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
       </div>
 
       {/* Fullscreen Modal */}
-      {isExpanded && (
+      {isExpanded && isMounted && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-fade-in"
           onClick={() => setIsExpanded(false)}
         >
           {/* Backdrop */}
@@ -367,7 +366,8 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

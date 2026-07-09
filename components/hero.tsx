@@ -305,7 +305,7 @@ export function Hero() {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 flex-1 flex items-center">
+      <div className="relative z-10 flex-1 flex items-start">
         <div className="w-full max-w-[1680px] mx-auto px-6 md:px-12 lg:px-20 ">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr]  items-center">
             {/* Left column - Text */}
@@ -338,10 +338,8 @@ export function Hero() {
                 <span className="block text-[clamp(2.5rem,5vw,4.5rem)] font-bold text-gray-900 leading-[1.05] tracking-tight">
                   Hub de Sistemas
                 </span>
-                <span className="block text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.05] tracking-tight mt-2">
-                  <span className="bg-gradient-to-r from-[#0066B3] via-[#00BFB3] to-[#8CC63F] bg-clip-text text-transparent">
+                <span className="block text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1.05] tracking-tight mt-2 text-gray-900">
                     Integrados
-                  </span>
                 </span>
               </h1>
 
