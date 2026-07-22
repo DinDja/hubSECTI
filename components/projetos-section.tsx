@@ -15,6 +15,7 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   FileText,
   Target,
   Lightbulb,
@@ -23,6 +24,7 @@ import {
   ClipboardList,
   DollarSign,
   CheckCircle2,
+  ImageOff,
 } from "lucide-react"
 
 type Projeto = {
@@ -246,40 +248,44 @@ export function ProjetosSection() {
 
 function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number }) {
   const [imgError, setImgError] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const fotoUrl = p.fotos?.[0]
   const hasFoto = !!fotoUrl && !imgError
   const atualizado = p.updatedAt ? new Date(p.updatedAt) : null
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl bg-card border border-border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in text-left"
-      style={{ animationDelay: `${index * 80}ms` }}>
-
-      {/* Thumbnail */}
-      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-cyan-50 to-blue-50">
+    <article
+      className="group flex h-full animate-fade-in flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors duration-300"
+      style={{
+        animationDelay: `${index * 80}ms`,
+        borderColor: isHovered ? `${COLORS.cyan}66` : undefined,
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Preview */}
+      <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-gradient-to-br from-cyan-50 to-blue-50">
         {hasFoto ? (
-          <img src={fotoUrl} alt={p.titulo || "Projeto"}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={() => setImgError(true)} />
+          <img
+            src={fotoUrl}
+            alt={p.titulo || "Projeto"}
+            className="h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+            onError={() => setImgError(true)}
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <FolderKanban className="w-12 h-12 text-cyan-200" />
+          <div className="flex h-full items-center justify-center">
+            <FolderKanban className="h-8 w-8 text-cyan-200" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <span className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 text-foreground text-sm font-semibold shadow-lg backdrop-blur-sm">
-            <Eye className="w-4 h-4" />
-            Ver detalhes
-          </span>
-        </div>
+        {/* Gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
         {/* Status badge */}
         {p.status && (
-          <div className="absolute top-3 left-3 z-20">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur-sm shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.green }} />
+          <div className="absolute left-3 top-3 z-10">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: COLORS.green }} />
               {p.status}
             </span>
           </div>
@@ -287,79 +293,109 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
 
         {/* Natureza badge */}
         {p.natureza && (
-          <div className="absolute top-3 right-3 z-20">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/80 backdrop-blur-sm text-muted-foreground shadow-sm">
+          <div className="absolute right-3 top-3 z-10">
+            <span className="inline-flex items-center rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
               {p.natureza}
             </span>
           </div>
         )}
+
+        {/* Action on hover */}
+        <div className="absolute bottom-3 right-3 z-20 flex translate-y-1 gap-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <span className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-background/95 px-3 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm">
+            <Eye className="h-3.5 w-3.5" />
+            Ver detalhes
+          </span>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <h3 className="text-base font-bold mb-1.5 line-clamp-2 leading-snug group-hover:text-cyan-700 transition-colors">
-          {p.titulo || "(sem título)"}
-        </h3>
+      <div className="flex flex-1 flex-col p-5">
+        {/* Meta header */}
+        <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: COLORS.cyan }} />
+            {p.natureza || p.status || "Projeto"}
+          </span>
+          <span>{String(index + 1).padStart(2, "0")}</span>
+        </div>
 
+        {/* Title */}
+        <h3 className="mt-3 text-lg font-semibold tracking-tight line-clamp-2">{p.titulo || "(sem título)"}</h3>
+
+        {/* Institution */}
         {(p.instituicao || p.unidade) && (
-          <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
-            <Building2 className="w-3 h-3 flex-shrink-0" />
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Building2 className="h-3 w-3 shrink-0" />
             <span className="truncate">{[p.instituicao, p.unidade].filter(Boolean).join(" · ")}</span>
           </p>
         )}
 
+        {/* Objective */}
         {p.objetivoGeral && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{p.objetivoGeral}</p>
+          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{p.objetivoGeral}</p>
         )}
 
-        <div className="space-y-1.5 text-xs text-muted-foreground mb-3">
+        <div aria-hidden className="mt-auto min-h-4" />
+
+        {/* Metadata row */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {p.responsavel && (
-            <div className="flex items-center gap-1.5">
-              <Users className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{p.responsavel}</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3 shrink-0" />
+              <span className="truncate max-w-[140px]">{p.responsavel}</span>
+            </span>
           )}
           {(p.municipio || p.estado) && (
-            <div className="flex items-center gap-1.5">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate max-w-[140px]">
                 <ListaTexto valor={p.municipio} />
                 {p.municipio && p.estado ? " · " : ""}{p.estado}
               </span>
-            </div>
+            </span>
           )}
           {atualizado && (
-            <div className="flex items-center gap-1.5">
-              <CalendarClock className="w-3 h-3 flex-shrink-0" />
-              <span>Atualizado em {atualizado.toLocaleDateString("pt-BR", {
-                day: "2-digit", month: "2-digit", year: "numeric"
-              })}</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <CalendarClock className="h-3 w-3 shrink-0" />
+              {atualizado.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+            </span>
           )}
         </div>
 
-        {/* Tags */}
-        {(p.nmrBeneficiarios || p.investimentoReal || p.periodo) && (
-          <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border">
+        {/* Divider */}
+        <div className="mt-4 border-t border-border" />
+
+        {/* Bottom row: tags + action */}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-1.5">
             {p.nmrBeneficiarios != null && p.nmrBeneficiarios !== "" && (
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ backgroundColor: `${COLORS.orange}15`, color: COLORS.orange }}>
-                {formatter.format(Number(p.nmrBeneficiarios))} beneficiário{Number(p.nmrBeneficiarios) !== 1 ? "s" : ""}
+              <span className="rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `${COLORS.orange}15`, color: COLORS.orange }}>
+                {formatter.format(Number(p.nmrBeneficiarios))} benef.
               </span>
             )}
             {p.investimentoReal && (
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ backgroundColor: `${COLORS.green}15`, color: COLORS.green }}>
+              <span className="rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `${COLORS.green}15`, color: COLORS.green }}>
                 Investimento
               </span>
             )}
             {p.periodo && (
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium" style={{ backgroundColor: `${COLORS.blue}15`, color: COLORS.blue }}>
+              <span className="rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `${COLORS.blue}15`, color: COLORS.blue }}>
                 {p.periodo}
               </span>
             )}
           </div>
-        )}
+
+          <span className="group/link inline-flex shrink-0 items-center gap-1 text-sm font-medium text-foreground">
+            Detalhes
+            <ArrowUpRight
+              className="h-4 w-4 transition-all duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+              style={{ color: isHovered ? COLORS.cyan : undefined }}
+            />
+          </span>
+        </div>
       </div>
-    </div>
+    </article>
   )
 }
 
