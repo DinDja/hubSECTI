@@ -14,6 +14,7 @@ interface SystemCardProps {
   icon: LucideIcon
   index: number
   image?: string | StaticImageData
+  tag?: string
 }
 
 function getMshotsPreview(url: string) {
@@ -21,7 +22,7 @@ function getMshotsPreview(url: string) {
   return `https://s.wordpress.com/mshots/v1/${normalizedUrl}?w=1200`
 }
 
-export function SystemCard({ title, description, url, color, icon: Icon, index, image }: SystemCardProps) {
+export function SystemCard({ title, description, url, color, icon: Icon, index, image, tag }: SystemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -38,6 +39,14 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
     return [getMshotsPreview(url)]
   }, [image, url])
   const previewSrc = previewCandidates[previewIndex] ?? previewCandidates[0]
+
+  const hostname = useMemo(() => {
+    try {
+      return new URL(url).hostname
+    } catch {
+      return url
+    }
+  }, [url])
 
   useEffect(() => {
     setIsMounted(true)
@@ -117,153 +126,111 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
 
   return (
     <>
-      <div
-        className="group relative overflow-hidden rounded-3xl bg-card border border-border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in"
+      <article
+        className="group flex h-full animate-fade-in flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors duration-300"
         style={{
-          animationDelay: `${index * 150}ms`,
-          boxShadow: isHovered ? `0 25px 50px -12px ${color}25` : undefined,
+          animationDelay: `${index * 80}ms`,
+          borderColor: isHovered ? `${color}66` : undefined,
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Animated color accent bar */}
-        <div 
-          className="absolute top-0 left-0 right-0 h-1.5 transition-all duration-500"
-          style={{ 
-            backgroundColor: color,
-            transform: isHovered ? "scaleX(1)" : "scaleX(0.3)",
-            transformOrigin: "left",
-          }}
-        />
-
-        {/* Preview iframe container */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+        {/* Preview */}
+        <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-muted">
           {/* Loading state */}
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted z-10 pointer-events-none">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 
-                  className="w-8 h-8 animate-spin" 
-                  style={{ color }} 
-                />
-                <span className="text-sm text-muted-foreground">Carregando preview...</span>
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted pointer-events-none">
+              <div className="flex items-center gap-2.5 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-xs">Carregando preview…</span>
               </div>
             </div>
           )}
 
           {/* Error state / Fallback */}
           {hasError ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <div className="text-center p-6">
-                <div 
-                  className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: `${color}20` }}
-                >
-                  <Icon className="w-8 h-8" style={{ color }} />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Preview indisponível
-                </p>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <Icon className="h-6 w-6 text-muted-foreground/60" />
+                <p className="text-xs text-muted-foreground">Preview indisponível</p>
               </div>
             </div>
           ) : (
-            <div className="absolute inset-0">
-              <Image
-                key={`${title}-${previewIndex}`}
-                src={previewSrc}
-                alt={`Preview do sistema ${title}`}
-                fill
-                className="object-cover"
-                onLoad={handlePreviewLoad}
-                onError={handlePreviewError}
-                loading={index === 0 ? "eager" : "lazy"}
-                unoptimized
-              />
-            </div>
+            <Image
+              key={`${title}-${previewIndex}`}
+              src={previewSrc}
+              alt={`Preview do sistema ${title}`}
+              fill
+              className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              onLoad={handlePreviewLoad}
+              onError={handlePreviewError}
+              loading={index === 0 ? "eager" : "lazy"}
+              unoptimized
+            />
           )}
-          
-          {/* Hover overlay */}
-          <div 
-            className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"
-          />
 
           {/* Action buttons on hover */}
-          <div className="absolute inset-0 z-20 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <div className="absolute bottom-3 right-3 z-20 flex translate-y-1 gap-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <button
               onClick={() => setIsExpanded(true)}
-              className="cursor-pointer pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-foreground text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+              aria-label={`Expandir preview de ${title}`}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background/95 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
             >
-              <Maximize2 className="w-4 h-4" />
-              Expandir
+              <Maximize2 className="h-4 w-4" />
             </button>
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="cursor-pointer pointer-events-auto flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
-              style={{ backgroundColor: color }}
+              aria-label={`Abrir ${title} em nova aba`}
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background/95 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
             >
-              <ExternalLink className="w-4 h-4" />
-              Abrir
+              <ExternalLink className="h-4 w-4" />
             </a>
-          </div>
-
-          {/* Icon badge */}
-          <div 
-            className="absolute top-4 left-4 p-3 rounded-xl backdrop-blur-sm transition-all duration-300 group-hover:scale-110"
-            style={{ 
-              backgroundColor: `${color}30`,
-              color: "white",
-            }}
-          >
-            <Icon className="w-6 h-6" />
-          </div>
-
-          {/* Status indicator */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm">
-            <span 
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ backgroundColor: color }}
-            />
-            <span className="text-xs font-medium text-foreground">Online</span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <h3 className="text-xl font-bold mb-2">{title}</h3>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-5 line-clamp-2">
+        <div className="flex flex-1 flex-col p-5">
+          <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5" style={{ backgroundColor: color }} />
+              {tag}
+            </span>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+          </div>
+
+          <h3 className="mt-3 text-lg font-semibold tracking-tight">{title}</h3>
+
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground line-clamp-2">
             {description}
           </p>
 
-          {/* URL indicator */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div 
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: color }}
-            />
-            <span className="truncate">{new URL(url).hostname}</span>
+          {hasError && (
+            <p className="mt-2 text-xs text-muted-foreground/80">
+              Não foi possível carregar a captura deste site. Use o link abaixo para abrir o sistema.
+            </p>
+          )}
+
+          <div aria-hidden className="mt-auto min-h-5" />
+
+          <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+            <span className="truncate font-mono text-xs text-muted-foreground">{hostname}</span>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/link inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-foreground"
+            >
+              Acessar
+              <ArrowUpRight
+                className="h-4 w-4 transition-all duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+                style={{ color: isHovered ? color : undefined }}
+              />
+            </a>
           </div>
-
-{hasError && (
-    <p className="mt-3 text-xs text-muted-foreground">
-      Nao foi possivel carregar a captura deste site. Use o botao abaixo para abrir o sistema.
-    </p>
-  )}
-
-          
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:opacity-90"
-            style={{ backgroundColor: color }}
-          >
-            <ExternalLink className="w-4 h-4" />
-            Abrir sistema
-          </a>
         </div>
-      </div>
+      </article>
 
       {/* Fullscreen Modal */}
       {isExpanded && isMounted && createPortal(
@@ -276,7 +243,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
           
           {/* Modal */}
           <div 
-            className="relative w-full max-w-7xl h-[90vh] rounded-3xl overflow-hidden bg-white shadow-2xl animate-scale-in"
+            className="relative w-full max-w-7xl h-[90vh] rounded-2xl overflow-hidden bg-white shadow-2xl animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -292,7 +259,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-lg">{title}</h3>
-                  <p className="text-white/60 text-sm">{new URL(url).hostname}</p>
+                  <p className="text-white/60 text-sm">{hostname}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

@@ -1,18 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { Search } from "lucide-react"
 import { SystemCard } from "./system-card"
-import { 
-  FolderKanban, 
-  FileText, 
-  Map, 
+import {
+  FolderKanban,
+  FileText,
+  Map,
   GraduationCap,
   Building2,
   BarChart3,
   Sparkles,
   Globe,
   Users,
-  Database
+  Database,
 } from "lucide-react"
 
 const colors = {
@@ -54,7 +55,6 @@ const systems = [
     title: "Painel Conecta Bahia",
     description: "Painel de visualização e monitoramento dos projetos de conectividade em toda a Bahia.",
     url: "https://conectabahia.secti.ba.gov.br",
-
     icon: Map,
     color: colors.green,
     category: "dados",
@@ -129,86 +129,139 @@ const systems = [
     url: "https://patenteslab.secti.ba.gov.br/",
     icon: Database,
     color: colors.blue,
-    category: "dados",  
+    category: "dados",
   },
 ]
 
 const categories = [
   { id: "todos", label: "Todos", color: colors.blue },
-  { id: "gestao", label: "Gestao", color: colors.cyan },
+  { id: "gestao", label: "Gestão", color: colors.cyan },
   { id: "dados", label: "Dados", color: colors.green },
   { id: "pesquisa", label: "Pesquisa", color: colors.magenta },
   { id: "comunicacao", label: "Comunicação", color: colors.yellow },
 ]
 
+const categoryLabels: Record<string, string> = Object.fromEntries(
+  categories.map((cat) => [cat.id, cat.label])
+)
+
 export function SystemsSection() {
   const [activeCategory, setActiveCategory] = useState("todos")
+  const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredSystems = activeCategory === "todos" 
-    ? systems 
-    : systems.filter(s => s.category === activeCategory)
+  const filteredSystems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    return systems.filter((system) => {
+      const matchesCategory = activeCategory === "todos" || system.category === activeCategory
+      const matchesSearch =
+        !query ||
+        system.title.toLowerCase().includes(query) ||
+        system.description.toLowerCase().includes(query)
+      return matchesCategory && matchesSearch
+    })
+  }, [activeCategory, searchQuery])
 
   return (
-    <section id="sistemas" className="relative py-24 md:py-32 overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full blur-3xl opacity-5 pointer-events-none"
-        style={{ background: `radial-gradient(circle, ${colors.blue}, ${colors.cyan}, transparent)` }}
-      />
-
-      <div className="relative px-6 md:px-10 lg:px-16 max-w-[1600px] mx-auto">
+    <section id="sistemas" className="py-24 md:py-32">
+      <div className="px-6 md:px-10 lg:px-16 max-w-[1600px] mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
-            Nossos{" "}
-            <span 
-              style={{
-                background: `linear-gradient(135deg, ${colors.cyan}, ${colors.blue})`,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              Sistemas
-            </span>
-          </h2>
-          
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Ferramentas digitais desenvolvidas para modernizar a gestão pública 
+        <header className="flex flex-col gap-6 border-b border-border pb-10 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              Plataformas
+            </p>
+            <h2 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
+              Sistemas{" "}
+              <span className="font-normal text-muted-foreground/50">
+                ({systems.length})
+              </span>
+            </h2>
+          </div>
+          <p className="max-w-sm text-sm leading-relaxed text-muted-foreground md:text-base">
+            Ferramentas digitais desenvolvidas para modernizar a gestão pública
             e ampliar o acesso à informação no estado da Bahia.
           </p>
+        </header>
+
+        {/* Controls */}
+        <div className="mt-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          {/* Category filters */}
+          <nav className="flex flex-wrap gap-x-6 gap-y-2">
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex cursor-pointer items-center gap-2 text-sm transition-colors duration-200 ${
+                    isActive
+                      ? "font-semibold text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span
+                    className="h-1.5 w-1.5 transition-opacity"
+                    style={{
+                      backgroundColor: cat.color,
+                      opacity: isActive ? 1 : 0.35,
+                    }}
+                  />
+                  {cat.label}
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Search */}
+          <div className="relative md:w-64">
+            <Search className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar sistema"
+              className="w-full border-b border-border bg-transparent py-2 pl-6 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+            />
+          </div>
         </div>
 
-        {/* Category filters */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12">
-          {categories.map((cat) => (
+        {/* Results count */}
+        <div className="mt-8 flex items-center justify-between">
+          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            {filteredSystems.length}{" "}
+            {filteredSystems.length === 1 ? "resultado" : "resultados"}
+          </p>
+          {searchQuery && (
             <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`cursor-pointer px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
-                activeCategory === cat.id
-                  ? "text-white shadow-lg scale-105"
-                  : "bg-muted hover:bg-muted/80"
-              }`}
-              style={{
-                backgroundColor: activeCategory === cat.id ? cat.color : undefined,
-                boxShadow: activeCategory === cat.id ? `0 10px 30px -10px ${cat.color}` : undefined,
-              }}
+              onClick={() => setSearchQuery("")}
+              className="cursor-pointer text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
             >
-              {cat.label}
+              Limpar busca
             </button>
-          ))}
+          )}
         </div>
 
         {/* Systems grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredSystems.map((system, index) => (
             <SystemCard
               key={system.title}
               {...system}
               index={index}
+              tag={categoryLabels[system.category]}
             />
           ))}
         </div>
+
+        {/* Empty state */}
+        {filteredSystems.length === 0 && (
+          <div className="mt-16 border-t border-border pt-10">
+            <p className="text-base font-semibold">Nenhum sistema encontrado</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Tente ajustar os filtros ou o termo de busca.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   )

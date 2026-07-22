@@ -12,7 +12,17 @@ import {
   Building2,
   Search,
   ChevronDown,
-  ImageOff,
+  X,
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  Target,
+  Lightbulb,
+  AlertTriangle,
+  Eye,
+  ClipboardList,
+  DollarSign,
+  CheckCircle2,
 } from "lucide-react"
 
 type Projeto = {
@@ -51,6 +61,7 @@ export function ProjetosSection() {
   const [hasMore, setHasMore] = useState(false)
   const [busca, setBusca] = useState("")
   const [filtroStatus, setFiltroStatus] = useState("todos")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const buscaRef = useRef("")
   const LIMIT = 12
 
@@ -196,7 +207,9 @@ export function ProjetosSection() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {projetosFiltrados.map((p, i) => (
-                <ProjetoCard key={p.id} projeto={p} index={i} />
+                <button key={p.id} onClick={() => setSelectedId(p.id)} className="cursor-pointer text-left w-full">
+                  <ProjetoCard projeto={p} index={i} />
+                </button>
               ))}
             </div>
 
@@ -217,6 +230,16 @@ export function ProjetosSection() {
           </>
         )}
       </div>
+
+      {/* Detail Modal */}
+      {selectedId && (
+        <ProjetoDetailModal
+          projectId={selectedId}
+          projetos={projetos}
+          onClose={() => setSelectedId(null)}
+          onNavigate={(id) => setSelectedId(id)}
+        />
+      )}
     </section>
   )
 }
@@ -228,7 +251,7 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
   const atualizado = p.updatedAt ? new Date(p.updatedAt) : null
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl bg-card border border-border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in"
+    <div className="group relative overflow-hidden rounded-3xl bg-card border border-border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-fade-in text-left"
       style={{ animationDelay: `${index * 80}ms` }}>
 
       {/* Thumbnail */}
@@ -244,9 +267,17 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
+        {/* Hover overlay */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <span className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 text-foreground text-sm font-semibold shadow-lg backdrop-blur-sm">
+            <Eye className="w-4 h-4" />
+            Ver detalhes
+          </span>
+        </div>
+
         {/* Status badge */}
         {p.status && (
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 z-20">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 backdrop-blur-sm shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.green }} />
               {p.status}
@@ -256,7 +287,7 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
 
         {/* Natureza badge */}
         {p.natureza && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-20">
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/80 backdrop-blur-sm text-muted-foreground shadow-sm">
               {p.natureza}
             </span>
@@ -327,6 +358,233 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
             )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  contexto: "Contextualização",
+  problemaDemanda: "Problema / Demanda",
+  justificativa: "Justificativa",
+  objetivoGeral: "Objetivo Geral",
+  objetivosEspecificos: "Objetivos Específicos",
+  beneficiarios: "Beneficiários",
+  sustentabilidade: "Sustentabilidade",
+  riscos: "Riscos",
+  pendencias: "Pendências",
+  observacoes: "Observações",
+  recursosHumanos: "Recursos Humanos",
+  recursosMateriais: "Recursos Materiais",
+  metaFisica: "Meta Física",
+  execucaoFisica: "Execução Física",
+  execucaoFinanceira: "Execução Financeira",
+  indicadoresProcesso: "Indicadores de Processo",
+  indicadoresResultado: "Resultados Esperados",
+  investimentoReal: "Investimento Real",
+  paoe: "PAOE",
+  localExecucao: "Local de Execução",
+  numeroProcessoSEI: "Nº Processo SEI",
+  periodo: "Período",
+  estado: "Estado",
+  territorio: "Território",
+  municipio: "Município",
+  instituicao: "Instituição",
+  unidade: "Unidade",
+  responsavel: "Responsável",
+  parceiros: "Parceiros",
+  natureza: "Natureza",
+  status: "Status",
+  estadoAtual: "Estado Atual",
+  fonteFinanciamento: "Fonte de Financiamento",
+}
+
+function FieldSection({ label, value }: { label: string; value: unknown }) {
+  if (!value) return null
+  const display = Array.isArray(value) ? value.join(", ") : String(value)
+  if (!display.trim()) return null
+
+  return (
+    <div className="space-y-1">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</h4>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">{display}</p>
+    </div>
+  )
+}
+
+function ProjetoDetailModal({
+  projectId, projetos, onClose, onNavigate,
+}: {
+  projectId: string
+  projetos: Projeto[]
+  onClose: () => void
+  onNavigate: (id: string) => void
+}) {
+  const [projeto, setProjeto] = useState<Projeto | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState<string | null>(null)
+  const [fotoIndex, setFotoIndex] = useState(0)
+  const [imgErro, setImgErro] = useState(false)
+
+  const idxAtual = useMemo(() => projetos.findIndex((p) => p.id === projectId), [projetos, projectId])
+  const prevId = idxAtual > 0 ? projetos[idxAtual - 1].id : null
+  const nextId = idxAtual < projetos.length - 1 ? projetos[idxAtual + 1].id : null
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = "" }
+  }, [])
+
+  useEffect(() => {
+    setLoading(true)
+    setErro(null)
+    setFotoIndex(0)
+    setImgErro(false)
+
+    fetch(`/api/hub/projetos/${projectId}`)
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
+      .then((data) => {
+        if (data.error) throw new Error(data.error)
+        setProjeto(data as Projeto)
+      })
+      .catch((err) => setErro(err.message))
+      .finally(() => setLoading(false))
+  }, [projectId])
+
+  const fotos = projeto?.fotos || []
+  const fotoAtual = fotos[fotoIndex]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 animate-fade-in" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+
+      <div className="relative w-full max-w-4xl max-h-[90vh] rounded-3xl overflow-hidden bg-white shadow-2xl animate-scale-in flex flex-col"
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <div>
+              <h3 className="font-bold text-lg line-clamp-1">{projeto?.titulo || "Carregando..."}</h3>
+              {projeto?.status && (
+                <span className="text-xs text-muted-foreground">{projeto.status}</span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {prevId && (
+              <button onClick={() => onNavigate(prevId)}
+                className="cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors" title="Anterior">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
+            {nextId && (
+              <button onClick={() => onNavigate(nextId)}
+                className="cursor-pointer p-2 rounded-xl hover:bg-muted transition-colors" title="Próximo">
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+            </div>
+          ) : erro ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+              <AlertCircle className="w-10 h-10 text-red-500" />
+              <p className="text-sm text-muted-foreground">{erro}</p>
+            </div>
+          ) : projeto ? (
+            <div className="space-y-8">
+              {/* Gallery */}
+              {fotos.length > 0 && (
+                <div className="space-y-3">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted">
+                    {!imgErro ? (
+                      <img src={fotoAtual} alt=""
+                        className="w-full h-full object-contain bg-black/5"
+                        onError={() => setImgErro(true)} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <ImageOff className="w-8 h-8" />
+                      </div>
+                    )}
+                  </div>
+                  {fotos.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {fotos.map((f, i) => (
+                        <button key={i} onClick={() => { setFotoIndex(i); setImgErro(false) }}
+                          className={`cursor-pointer shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-colors ${i === fotoIndex ? "border-cyan-500" : "border-transparent hover:border-muted-foreground/30"}`}>
+                          <img src={f} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Info grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FieldSection label="Natureza" value={projeto.natureza} />
+                <FieldSection label="Status" value={projeto.status} />
+                <FieldSection label="Estado Atual" value={projeto.estadoAtual} />
+                <FieldSection label="Instituição" value={projeto.instituicao} />
+                <FieldSection label="Unidade" value={projeto.unidade} />
+                <FieldSection label="Responsável" value={projeto.responsavel} />
+                <FieldSection label="Parceiros" value={projeto.parceiros} />
+                <FieldSection label="Período" value={projeto.periodo} />
+                <FieldSection label="Local de Execução" value={projeto.localExecucao} />
+                <FieldSection label="Estado" value={projeto.estado} />
+                <FieldSection label="Território" value={projeto.territorio} />
+                <FieldSection label="Município" value={projeto.municipio} />
+                <FieldSection label="Nº Beneficiários" value={projeto.nmrBeneficiarios} />
+                <FieldSection label="Investimento Real" value={projeto.investimentoReal} />
+                <FieldSection label="PAOE" value={projeto.paoe} />
+                <FieldSection label="Fonte de Financiamento" value={projeto.fonteFinanciamento} />
+                <FieldSection label="Meta Física" value={projeto.metaFisica} />
+                <FieldSection label="Execução Física" value={projeto.execucaoFisica} />
+                <FieldSection label="Execução Financeira" value={projeto.execucaoFinanceira} />
+                <FieldSection label="Nº Processo SEI" value={projeto.numeroProcessoSEI} />
+              </div>
+
+              {/* Descrições */}
+              <div className="space-y-6 pt-4 border-t border-border">
+                <FieldSection label="Contextualização" value={projeto.contexto} />
+                <FieldSection label="Problema / Demanda" value={projeto.problemaDemanda} />
+                <FieldSection label="Justificativa" value={projeto.justificativa} />
+                <FieldSection label="Objetivo Geral" value={projeto.objetivoGeral} />
+                <FieldSection label="Objetivos Específicos" value={projeto.objetivosEspecificos} />
+                <FieldSection label="Beneficiários" value={projeto.beneficiarios} />
+                <FieldSection label="Sustentabilidade" value={projeto.sustentabilidade} />
+                <FieldSection label="Riscos" value={projeto.riscos} />
+                <FieldSection label="Pendências" value={projeto.pendencias} />
+                <FieldSection label="Observações" value={projeto.observacoes} />
+              </div>
+
+              {/* Indicadores */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
+                <FieldSection label="Indicadores de Processo" value={projeto.indicadoresProcesso} />
+                <FieldSection label="Resultados Esperados" value={projeto.indicadoresResultado} />
+                <FieldSection label="Recursos Humanos" value={projeto.recursosHumanos} />
+                <FieldSection label="Recursos Materiais" value={projeto.recursosMateriais} />
+              </div>
+
+              {/* Footer info */}
+              {projeto.updatedAt && (
+                <p className="text-xs text-muted-foreground pt-4 border-t border-border">
+                  Última atualização: {new Date(projeto.updatedAt).toLocaleString("pt-BR")}
+                </p>
+              )}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   )
