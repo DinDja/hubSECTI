@@ -1,9 +1,1 @@
-﻿{
-  "name": "hubsecti-functions",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Netlify Functions do HUB SECTI",
-  "dependencies": {
-    "firebase-admin": "^12.7.0"
-  }
-}
+{"name":"hubsecti-functions","version":"1.0.0","private":true,"description":"Netlify Functions do HUB SECTI","dependencies":{"firebase-admin":"^12.7.0"}}
