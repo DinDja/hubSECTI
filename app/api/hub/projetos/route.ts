@@ -26,6 +26,7 @@ const PUBLIC_FIELDS = [
   "execucaoFinanceira",
   "objetivoGeral",
   "objetivosEspecificos",
+  "fotos",
   "updatedAt",
 ]
 

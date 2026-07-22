@@ -32,6 +32,7 @@ type Projeto = {
   fonteFinanciamento?: string[] | string
   localExecucao?: string
   objetivoGeral?: string
+  fotos?: string[]
   updatedAt?: string | null
 }
 
@@ -244,6 +245,18 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
         className="absolute top-0 left-0 right-0 h-1.5"
         style={{ backgroundColor: color }}
       />
+
+      {/* Imagem de capa */}
+      {p.fotos && p.fotos.length > 0 && (
+        <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={p.fotos[0]}
+            alt={p.titulo || "Foto do projeto"}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
 
       <div className="p-6">
         {/* Status badge */}
