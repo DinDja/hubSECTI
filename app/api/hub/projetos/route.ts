@@ -34,6 +34,7 @@ function toIso(value: unknown): string | null {
 
 function mapPublicProject(doc: FirebaseFirestore.QueryDocumentSnapshot) {
   const data = doc.data() || {}
+  if (!data.titulo) return null
   const out: Record<string, unknown> = { id: doc.id }
   for (const field of PUBLIC_FIELDS) {
     if (field === "updatedAt") { out.updatedAt = toIso(data.updatedAt); continue }
@@ -57,28 +58,27 @@ export async function GET(req: NextRequest) {
     if (search) {
       // Fetch all matching, count server-side
       const all = await query.get()
-      const allProjects = all.docs.map(mapPublicProject).filter((p) => {
+      const allProjects = all.docs.map(mapPublicProject).filter(Boolean) as Record<string, unknown>[]
+      const filtered = allProjects.filter((p) => {
         const text = [p.titulo, p.instituicao, p.unidade, p.responsavel, p.natureza, p.objetivoGeral]
           .filter(Boolean).join(" ").toLowerCase()
         return text.includes(search)
       })
-      total = allProjects.length
-      const sliced = allProjects.slice(offset, offset + limit)
+      total = filtered.length
+      const sliced = filtered.slice(offset, offset + limit)
       return NextResponse.json({ total, limit, offset, hasMore: offset + limit < total, projetos: sliced }, {
         status: 200,
         headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600", "X-Hub-Source": "SECTI-firestore" },
       })
     }
 
-    const countSnap = await query.get()
-    total = countSnap.size
-
-    query = query.limit(limit).offset(offset)
-    const snap = await query.get()
-    const projetos = snap.docs.map(mapPublicProject)
+    const allDocs = await query.get()
+    const allMapped = allDocs.docs.map(mapPublicProject).filter(Boolean) as Record<string, unknown>[]
+    total = allMapped.length
+    const sliced = allMapped.slice(offset, offset + limit)
 
     return NextResponse.json(
-      { total, limit, offset, hasMore: offset + limit < total, projetos },
+      { total, limit, offset, hasMore: offset + limit < total, projetos: sliced },
       {
         status: 200,
         headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600", "X-Hub-Source": "SECTI-firestore" },
