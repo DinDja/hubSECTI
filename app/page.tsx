@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero"
 import { SystemsSection } from "@/components/systems-section"
 import { AboutSection } from "@/components/about-section"
 import { SectiTimelineSection } from "@/components/secti-timeline-section"
+import { ProjetosSection } from "@/components/projetos-section"
 import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
 import { PageAccessLogger } from "@/components/page-access-logger"
@@ -14,6 +15,7 @@ export default function Home() {
       <Header />
       <Hero />
       <SystemsSection />
+      <ProjetosSection />
       <AboutSection />
       <SectiTimelineSection />
       <Footer />

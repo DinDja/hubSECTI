@@ -1,12 +1,15 @@
 [build]
   command = "corepack pnpm build"
   publish = ".next"
+  functions = "netlify/functions"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["firebase-admin"]
 
 [dev]
   command = "corepack pnpm dev"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-[functions]
-  directory = "netlify/functions"
