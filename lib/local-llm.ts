@@ -28,8 +28,8 @@ export type GenerateToken =
   | { type: "reasoning"; text: string }
   | { type: "content"; text: string }
 
-// SmolLM2-1.7B - equilibrio entre inteligencia e VRAM (~1.7B params, ~2.7GB)
-const MODEL_ID = "SmolLM2-1.7B-Instruct-q4f32_1-MLC"
+// SmolLM2-360M - ultraleve (~580MB VRAM), rapido, p/ devices modestos
+const MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC"
 
 // Detecta mobile para nao carregar modelo local (memoria Insuficiente)
 function isMobileDevice(): boolean {
