@@ -24,8 +24,8 @@ export type LocalLLMState = {
 
 export type { ChatCompletionMessageParam }
 
-// Qwen3-8B - modelo pesado (~8B params, 4-bit f32, ~6.8GB VRAM - requer GPU dedicada)
-const MODEL_ID = "Qwen3-8B-q4f32_1-MLC"
+// Qwen2.5-1.5B - equilibrio entre inteligencia e VRAM (~1.5B params, f32, ~1.9GB)
+const MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"
 
 type EngineRef = {
   engine: MLCEngine | null
