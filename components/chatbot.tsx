@@ -327,17 +327,19 @@ export function Chatbot() {
         style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
         aria-label="Abrir assistente GUIÁ"
       >
-        <MetalFx variant="circle" strength={0.85} className="relative">
-          <div className="relative">
-            <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
-            <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
-              useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
-            }`} />
+        <MetalFx variant="button" strength={0.75} preset="silver">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
+              <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
+                useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
+              }`} />
+            </div>
+            <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
+              GUIÁ
+            </span>
           </div>
         </MetalFx>
-        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
-          GUIÁ
-        </span>
       </button>
 
       {/* Panel — mobile-first: fullscreen no mobile, fixed card no desktop */}
@@ -353,9 +355,9 @@ export function Chatbot() {
         }}
       >
         {/* Header */}
-        <header className="relative flex shrink-0 items-center justify-between border-b border-border bg-card px-5 py-4">
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#00B5AD] via-[#0077C0] to-[#7AC143]" />
-          <div className="flex items-center gap-3">
+        <BorderBeam size="md" colorVariant="ocean" theme="dark" active={true} strength={0.35} duration={3} className="shrink-0">
+          <header className="relative z-10 flex items-center justify-between border-b border-border/40 bg-card px-5 py-4">
+            <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
               <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
             </div>
@@ -397,15 +399,14 @@ export function Chatbot() {
             </button>
           </div>
         </header>
+        </BorderBeam>
 
         {/* Status line */}
         {isTyping && (
-          <BorderBeam size="line" colorVariant="colorful" theme="auto" active={true} duration={2.5} strength={0.8} className="shrink-0">
-            <div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
-              <span>processando…</span>
-            </div>
-          </BorderBeam>
+          <div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
+            <span>processando…</span>
+          </div>
         )}
 
         {/* Messages */}
