@@ -16,13 +16,14 @@ const LocalLLMContext = createContext<Ctx | null>(null)
 const STORAGE_KEY = "guia-model-pref"
 
 export function LocalLLMProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<Mode>(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved === "local" || saved === "server") return saved
-    }
-    return "server"
-  })
+  // Sempre inicia como "server" no SSR e no primeiro render do cliente
+  // para evitar hydration mismatch. Lê localStorage apos montar.
+  const [mode, setModeState] = useState<Mode>("server")
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved === "local" || saved === "server") setModeState(saved)
+  }, [])
 
   const setMode = useCallback((m: Mode) => {
     setModeState(m)
