@@ -28,8 +28,8 @@ export type GenerateToken =
   | { type: "reasoning"; text: string }
   | { type: "content"; text: string }
 
-// Qwen2.5-1.5B - equilibrio entre inteligencia e VRAM (~1.5B params, f32, ~1.9GB)
-const MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"
+// Llama-3.2-1B - mais leve (~1.1GB) mantendo boa qualidade
+const MODEL_ID = "Llama-3.2-1B-Instruct-q4f32_1-MLC"
 
 // Detecta mobile para nao carregar modelo local (memoria Insuficiente)
 function isMobileDevice(): boolean {
