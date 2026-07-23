@@ -1,9 +1,21 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { X, ArrowUp, MessageSquare } from "lucide-react"
 import { useChat, type UIMessage } from "@ai-sdk/react"
 import { getAllChatSnapshots } from "@/lib/chat-store"
+import { useLocalLLM, type ChatCompletionMessageParam } from "@/lib/local-llm"
+import { DownloadModelButton } from "@/components/download-model-button"
+import { allEntries } from "@/lib/chatbot-knowledge"
+
+// Prompt compacto para o modelo local (SmolLM2-135M tem contexto limitado)
+function buildLocalSystemPrompt(context?: string): string {
+  const brief = allEntries
+    .map((e) => `- ${e.title}: ${e.content.split("\n")[0]}`)
+    .join("\n")
+  const live = context ? `\n\nContexto ao vivo:\n${context.slice(0, 600)}` : ""
+  return `Voce e o GUIA, assistente do Hub SECTI (ciencia, tecnologia e inovacao da Bahia). Responda em portugues, curto e direto.\nSistemas conhecidos:\n${brief.slice(0, 1200)}${live}`
+}
 
 type QuickQuestion = { label: string; query: string; color: string }
 
@@ -68,15 +80,20 @@ function MsgCounter({ n }: { n: number }) {
 }
 
 export function Chatbot() {
-  const { messages, sendMessage, status, stop, error, setMessages } = useChat({
+  const localLLM = useLocalLLM()
+
+  const useChatInstance = useChat({
     messages: INITIAL_MESSAGES,
   })
+  const { messages, sendMessage, status, stop, error, setMessages } = useChatInstance
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [localRunning, setLocalRunning] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
-  const isTyping = status === "submitted" || status === "streaming"
+  const isTyping = (status === "submitted" || status === "streaming") || localRunning
   const msgCount = messages.filter((m) => m.role === "assistant").length
 
   useEffect(() => {
@@ -90,14 +107,112 @@ export function Chatbot() {
     }
   }, [isOpen])
 
-  const handleSend = async (query: string) => {
+  const handleSend = useCallback(async (query: string) => {
     const text = query.trim()
     if (!text || isTyping) return
     setInput("")
+
+    // snapshot da base para contexto (usado por ambos os caminhos)
     const snapshots = await getAllChatSnapshots()
-    const context = snapshots.map((s) => `[Fonte: ${s.source}]\n${s.content}`).join("\n\n")
-    await sendMessage({ text }, context ? { body: { context } } : undefined)
-  }
+    const context = snapshots
+      .map((s) => `[Fonte: ${s.source}]\n${s.content}`)
+      .join("\n\n")
+
+    // --- Caminho LOCAL: SmolLM2 pronto, gerar no cliente ---
+    if (localLLM.isReady) {
+      // adiciona a MsgUsuario ao estado imediatamente
+      const userMsgId = `u-${Date.now()}`
+      const nextMessages: UIMessage[] = [
+        ...messages,
+        {
+          id: userMsgId,
+          role: "user",
+          parts: [{ type: "text", text }],
+        },
+      ]
+      setMessages(nextMessages)
+
+      // monta prompt
+      const systemPrompt = buildLocalSystemPrompt(context)
+      const conv: ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text },
+      ]
+
+      const assistantMsgId = `a-${Date.now()}`
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMsgId,
+          role: "assistant",
+          parts: [{ type: "text", text: "" }],
+        },
+      ])
+
+      const controller = new AbortController()
+      abortRef.current = controller
+      setLocalRunning(true)
+
+      try {
+        let acc = ""
+        for await (const delta of localLLM.generate(conv, {
+          temperature: 0.7,
+          max_tokens: 512,
+          signal: controller.signal,
+        })) {
+          acc += delta
+          // atualiza incrementalmente (sem reconciliação profunda)
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId ? {
+                ...m,
+                parts: [{ type: "text", text: acc }],
+              } : m
+            )
+          )
+        }
+        if (!acc) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId ? {
+                ...m,
+                parts: [{ type: "text", text: "Desculpe, não consegui gerar resposta localmente. Tente novamente." }],
+              } : m
+            )
+          )
+        }
+      } catch (err) {
+        console.error("Local LLM erro:", err)
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId ? {
+              ...m,
+              parts: [{ type: "text", text: "Erro ao gerar localmente. Verifique o WebGPU e tente novamente." }],
+            } : m
+          )
+        )
+      } finally {
+        setLocalRunning(false)
+        abortRef.current = null
+      }
+      return
+    }
+
+    // --- Caminho SERVIDOR: z-ai (GLM-4.5-flash) ---
+    await sendMessage(
+      { text },
+      context ? { body: { context } } : undefined
+    )
+  }, [isTyping, localLLM, localLLM.isReady, messages, sendMessage, setMessages])
+
+  const handleStop = useCallback(() => {
+    if (localRunning) {
+      abortRef.current?.abort()
+      setLocalRunning(false)
+    } else {
+      stop()
+    }
+  }, [localRunning, stop])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -144,6 +259,10 @@ export function Chatbot() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <DownloadModelButton
+              state={localLLM.state}
+              onStart={() => {}}
+            />
             <MsgCounter n={msgCount - 1} />
             <button
               onClick={() => setIsOpen(false)}
@@ -278,7 +397,7 @@ export function Chatbot() {
             />
             {isTyping ? (
               <button
-                onClick={() => stop()}
+                onClick={handleStop}
                 className="absolute right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:border-red-500/40 hover:text-red-500"
                 aria-label="Parar"
               >
