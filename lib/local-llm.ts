@@ -24,8 +24,9 @@ export type LocalLLMState = {
 
 export type { ChatCompletionMessageParam }
 
-// Qwen3-0.6B - modelo leve para PC fraco (~0.6B params, 4-bit f32, ~1.9GB VRAM)
-const MODEL_ID = "Qwen3-0.6B-q4f32_1-MLC"
+// SmolLM2-360M - modelo leve (~360M params, 4-bit f32, ~580MB VRAM)
+// Compatível com qualquer WebGPU (sem shader-f16), roda até em GPU integrada fraca
+const MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC"
 
 type EngineRef = {
   engine: MLCEngine | null
