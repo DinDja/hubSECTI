@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { X, ArrowUp, MessageSquare, Copy, Check, RotateCcw, Cpu, Cloud } from "lucide-react"
+import { ThinkingOrb } from "thinking-orbs"
+import { BorderBeam } from "border-beam"
+import { MetalFx } from "metal-fx"
 import { useChat, type UIMessage } from "@ai-sdk/react"
 import { getAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
@@ -324,12 +327,14 @@ export function Chatbot() {
         style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
         aria-label="Abrir assistente GUIÁ"
       >
-        <div className="relative">
-          <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
-          <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
-            useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
-          }`} />
-        </div>
+        <MetalFx variant="circle" strength={0.85} className="relative">
+          <div className="relative">
+            <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
+            <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
+              useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
+            }`} />
+          </div>
+        </MetalFx>
         <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
           GUIÁ
         </span>
@@ -395,11 +400,12 @@ export function Chatbot() {
 
         {/* Status line */}
         {isTyping && (
-          <div className="relative flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
-            <span>processando…</span>
-            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00B5AD]/30 to-transparent animate-pulse" />
-          </div>
+          <BorderBeam size="line" colorVariant="colorful" theme="auto" active={true} duration={2.5} strength={0.8} className="shrink-0">
+            <div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
+              <span>processando…</span>
+            </div>
+          </BorderBeam>
         )}
 
         {/* Messages */}
@@ -451,14 +457,8 @@ export function Chatbot() {
                   <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
                   GUIÁ · pensando…
                 </div>
-                <div className="flex gap-1.5 py-1">
-                  {[0, 1, 2].map((j) => (
-                    <span
-                      key={j}
-                      className="h-1.5 w-1.5 rounded-full bg-[#00B5AD]/50 animate-bounce"
-                      style={{ animationDelay: `${j * 150}ms` }}
-                    />
-                  ))}
+                <div className="py-1">
+                  <ThinkingOrb state="solving" size={20} />
                 </div>
               </div>
             )}
