@@ -28,7 +28,7 @@ export function PerfOverlay({ active }: Props) {
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 ${
+      className={`fixed inset-0 z-40 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 ${
         visible ? "opacity-100" : "opacity-0"
       }`}
       role="dialog"
