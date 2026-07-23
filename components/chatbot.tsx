@@ -6,15 +6,31 @@ import { useChat, type UIMessage } from "@ai-sdk/react"
 import { getAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
 import { DownloadModelButton } from "@/components/download-model-button"
-import { allEntries } from "@/lib/chatbot-knowledge"
+import { allEntries, type KnowledgeEntry } from "@/lib/chatbot-knowledge"
+import { rankEntries } from "@/lib/nlu/scorer"
 
-// Prompt compacto para o modelo local (SmolLM2-135M tem contexto limitado)
-function buildLocalSystemPrompt(context?: string): string {
-  const brief = allEntries
-    .map((e) => `- ${e.title}: ${e.content.split("\n")[0]}`)
-    .join("\n")
-  const live = context ? `\n\nContexto ao vivo:\n${context.slice(0, 600)}` : ""
-  return `Voce e o GUIA, assistente do Hub SECTI (ciencia, tecnologia e inovacao da Bahia). Responda em portugues, curto e direto.\nSistemas conhecidos:\n${brief.slice(0, 1200)}${live}`
+// RAG: seleciona top-N entradas relevantes ah pergunta e monta prompt focado.
+// Modelo local (Llama-3.2-1B) tem contexto limitado; injetar tudo desperdica espaço.
+function buildLocalSystemPrompt(query: string, context?: string): string {
+  // Ranking por relevância usando o pipeline NLU existente
+  const ranked = rankEntries(allEntries, query).slice(0, 5)
+  // Se nada relevante, fallback para resumo geral curto
+  const ctxEntries: KnowledgeEntry[] = ranked.length > 0
+    ? ranked.map((s) => s.entry)
+    : allEntries.filter((e) => ["sobre-hub", "sobre-secti", "sistemas-disponiveis", "saudacao"].includes(e.id))
+
+  const knowledge = ctxEntries
+    .map((e) => {
+      const links = e.links ? ` (${e.links.map((l) => l.url).join(", ")})` : ""
+      return `### ${e.title}\n${e.content}${links}`
+    })
+    .join("\n\n")
+
+  const live = context ? `\n\nDados ao vivo:\n${context.slice(0, 500)}` : ""
+  return `Voce e o GUIA, assistente do Hub SECTI (Secretaria de Ciencia, Tecnologia e Inovacao da Bahia). Responda em portugues, curto e direto, em texto plano (sem markdown). Use a base de conhecimento abaixo para responder.${live}
+
+Base de conhecimento relevante para "${query}":
+${knowledge}`
 }
 
 type QuickQuestion = { label: string; query: string; color: string }
@@ -140,7 +156,7 @@ export function Chatbot() {
         { id: userMsgId, role: "user", parts: [{ type: "text" as const, text }] },
       ])
 
-      const systemPrompt = buildLocalSystemPrompt(context)
+      const systemPrompt = buildLocalSystemPrompt(text, context)
       const conv: ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
         { role: "user", content: text },
@@ -161,7 +177,7 @@ export function Chatbot() {
         let contentAcc = ""
         for await (const token of localLLM.generate(conv, {
           temperature: 0.7,
-          max_tokens: 512,
+          max_tokens: 800,
           signal: controller.signal,
         })) {
           if (token.type === "reasoning") {
