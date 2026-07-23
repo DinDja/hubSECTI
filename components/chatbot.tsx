@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { X, ArrowUp, MessageSquare } from "lucide-react"
+import { X, ArrowUp, MessageSquare, Copy, Check, RotateCcw } from "lucide-react"
 import { useChat, type UIMessage } from "@ai-sdk/react"
 import { getAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
@@ -106,6 +106,26 @@ function getMessageText(msg: UIMessage): string {
 
 function MsgCounter({ n }: { n: number }) {
   return <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{String(n).padStart(2, "0")}</span>
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation()
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 1400)
+        }).catch(() => {})
+      }}
+      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-muted-foreground/50 opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
+      aria-label={copied ? "Copiado" : "Copiar mensagem"}
+      title={copied ? "Copiado" : "Copiar mensagem"}
+    >
+      {copied ? <Check className="h-3.5 w-3.5 text-[#00B5AD]" /> : <Copy className="h-3.5 w-3.5" />}
+    </button>
+  )
 }
 
 export function Chatbot() {
@@ -232,6 +252,13 @@ export function Chatbot() {
     }
   }, [localRunning, stop])
 
+  const handleNewChat = useCallback(() => {
+    handleStop()
+    setMessages(INITIAL_MESSAGES)
+    setInput("")
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }, [handleStop, setMessages])
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -297,6 +324,14 @@ export function Chatbot() {
             </div>
             <MsgCounter n={msgCount - 1} />
             <button
+              onClick={handleNewChat}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted"
+              aria-label="Nova conversa"
+              title="Nova conversa"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            <button
               onClick={() => setIsOpen(false)}
               className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted"
               aria-label="Fechar chat"
@@ -339,13 +374,14 @@ export function Chatbot() {
                     </div>
                   ) : (
                     <div
-                      className="border-l-2 pl-4 transition-colors hover:border-[#00B5AD]"
+                      className="group/msg border-l-2 pl-4 transition-colors hover:border-[#00B5AD]"
                       style={{ borderColor: msg.id === "welcome" ? "#00B5AD" : "#0077C0" }}
                     >
                       <div className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: msg.id === "welcome" ? "#00B5AD" : "#0077C0" }} />
                         <span>GUIÁ</span>
                         <MsgCounter n={i} />
+                        {msg.id !== "welcome" && text && <CopyButton text={text} />}
                       </div>
                       <div
                         className="text-sm leading-relaxed text-foreground whitespace-pre-wrap"
