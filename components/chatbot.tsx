@@ -73,6 +73,7 @@ function getMessageText(msg: UIMessage): string {
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("")
+    .trim()
 }
 
 function MsgCounter({ n }: { n: number }) {
