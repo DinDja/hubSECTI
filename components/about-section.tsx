@@ -302,11 +302,7 @@ function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string })
   const { useLocal } = useLocalLLMMode()
 
   useEffect(() => {
-    if (useLocal) {
-      setCount(end)
-      return
-    }
-    if (hasAnimated) {
+    if (useLocal || hasAnimated) {
       setCount(end)
       return
     }
