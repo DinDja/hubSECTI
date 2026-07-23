@@ -315,7 +315,7 @@ export function Chatbot() {
       {/* Trigger — quadrado catalog-style */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`cursor-pointer group fixed z-50 flex items-center gap-3 border border-border bg-card px-4 py-2.5 shadow-sm transition-all duration-300 hover:border-[#00B5AD]/40 hover:bg-muted ${
+        className={`cursor-pointer group fixed z-[60] flex items-center gap-3 border border-border bg-card px-4 py-2.5 shadow-sm transition-all duration-300 hover:border-[#00B5AD]/40 hover:bg-muted ${
           isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
         } right-6 bottom-6 max-sm:right-4 max-sm:bottom-4`}
         style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
@@ -334,7 +334,7 @@ export function Chatbot() {
 
       {/* Panel — mobile-first: fullscreen no mobile, fixed card no desktop */}
       <div
-        className={`fixed z-50 flex flex-col overflow-hidden bg-card transition-all duration-300 ${
+        className={`fixed z-[60] flex flex-col overflow-hidden bg-card transition-all duration-300 ${
           isOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
         } inset-0 h-full max-sm:border-0 sm:inset-auto sm:top-auto sm:bottom-6 sm:right-6 sm:h-auto sm:w-[400px] sm:max-h-[620px] sm:rounded-xl sm:border sm:border-border`}
         style={{

@@ -23,13 +23,21 @@ export function PerfOverlay({ active }: Props) {
     setVisible(false)
   }, [active])
 
+  // Trava scroll do body quando ativo
+  useEffect(() => {
+    if (active) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = "hidden"
+      return () => { document.body.style.overflow = prev }
+    }
+  }, [active])
+
   if (!mounted || !active) return null
 
-  // Apenas um dim sutil sobre o conteudo da pagina
-  // O chatbot (z-50) fica por cima, sem bloqueio visual agressivo
+  // z-[55] cobre header (z-50) mas chatbot fica em z-[60]
   return createPortal(
     <div
-      className={`fixed inset-0 z-[48] bg-gradient-to-b from-black/60 via-black/50 to-black/60 transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[55] bg-gradient-to-b from-black/60 via-black/50 to-black/60 transition-opacity duration-500 ${
         visible ? "opacity-100" : "opacity-0"
       }`}
       aria-hidden
