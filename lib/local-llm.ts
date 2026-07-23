@@ -24,6 +24,10 @@ export type LocalLLMState = {
 
 export type { ChatCompletionMessageParam }
 
+export type GenerateToken =
+  | { type: "reasoning"; text: string }
+  | { type: "content"; text: string }
+
 // Qwen2.5-1.5B - equilibrio entre inteligencia e VRAM (~1.5B params, f32, ~1.9GB)
 const MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"
 
@@ -97,7 +101,7 @@ export function useLocalLLM() {
   const generate = useCallback(async function* (
     messages: ChatCompletionMessageParam[],
     opts?: { temperature?: number; max_tokens?: number; signal?: AbortSignal }
-  ): AsyncGenerator<string, void, unknown> {
+  ): AsyncGenerator<GenerateToken, void, unknown> {
     if (!engineRef.engine) {
       throw new Error("Modelo local não está pronto")
     }
@@ -108,12 +112,13 @@ export function useLocalLLM() {
         messages,
         temperature: opts?.temperature ?? 0.7,
         max_tokens: opts?.max_tokens ?? 512,
-        extra_body: { enable_thinking: false },
       })
     for await (const chunk of stream) {
       if (opts?.signal?.aborted) break
-      const delta = chunk.choices?.[0]?.delta?.content
-      if (delta) yield delta
+      const reasoning = (chunk.choices?.[0]?.delta as Record<string, unknown>)?.["reasoning_content"] as string | undefined
+      if (reasoning) yield { type: "reasoning" as const, text: reasoning }
+      const content = chunk.choices?.[0]?.delta?.content
+      if (content) yield { type: "content" as const, text: content }
     }
   }, [])
 

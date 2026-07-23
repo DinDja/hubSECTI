@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { X, ArrowUp, MessageSquare } from "lucide-react"
 import { useChat, type UIMessage } from "@ai-sdk/react"
 import { getAllChatSnapshots } from "@/lib/chat-store"
-import { useLocalLLM, type ChatCompletionMessageParam } from "@/lib/local-llm"
+import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
 import { DownloadModelButton } from "@/components/download-model-button"
 import { allEntries } from "@/lib/chatbot-knowledge"
 
@@ -68,13 +68,24 @@ function renderRichText(text: string): string {
   return tokens.join("")
 }
 
+// Separa pensamento (delimitado por || ) da resposta e renderiza com estilo
+function renderWithThinking(text: string): string {
+  const idx = text.indexOf("||")
+  if (idx === -1) return renderRichText(text.trim())
+  const thinking = text.slice(0, idx).trim()
+  const response = text.slice(idx + 2).trim()
+  if (!thinking) return renderRichText(response)
+  return `<div class="mb-3 rounded-md border border-[#00B5AD]/20 bg-[#00B5AD]/5 px-3 py-2 font-mono text-xs leading-relaxed text-muted-foreground">`
+    + `<span class="mb-1 block text-[10px] uppercase tracking-wider text-[#00B5AD]/60">pensamento</span>`
+    + `${escapeHtml(thinking)}</div>`
+    + renderRichText(response)
+}
+
 function getMessageText(msg: UIMessage): string {
   return msg.parts
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("")
-    .replace(/<think>[\s\S]*?<\/think>/g, "")
-    .trim()
 }
 
 function MsgCounter({ n }: { n: number }) {
@@ -146,22 +157,30 @@ export function Chatbot() {
       setLocalRunning(true)
 
       try {
-        let acc = ""
-        for await (const delta of localLLM.generate(conv, {
+        let reasoningAcc = ""
+        let contentAcc = ""
+        for await (const token of localLLM.generate(conv, {
           temperature: 0.7,
           max_tokens: 512,
           signal: controller.signal,
         })) {
-          acc += delta
+          if (token.type === "reasoning") {
+            reasoningAcc += token.text
+          } else {
+            contentAcc += token.text
+          }
+          const displayText = reasoningAcc
+            ? `||${reasoningAcc}\n\n${contentAcc}`
+            : contentAcc
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMsgId
-                ? { ...m, parts: [{ type: "text" as const, text: acc }] }
+                ? { ...m, parts: [{ type: "text" as const, text: displayText }] }
                 : m
             )
           )
         }
-        if (acc) return // sucesso, sai
+        if (reasoningAcc || contentAcc) return // sucesso, sai
 
         // acc vazio → fallback silencioso
         console.warn("Local LLM: resposta vazia, fallback para servidor")
@@ -309,7 +328,7 @@ export function Chatbot() {
                       </div>
                       <div
                         className="text-sm leading-relaxed text-foreground whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{ __html: renderRichText(text) }}
+                        dangerouslySetInnerHTML={{ __html: renderWithThinking(text) }}
                       />
                     </div>
                   )}
