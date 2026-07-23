@@ -204,7 +204,7 @@ export function Chatbot() {
 
   return (
     <>
-      {/* Trigger — bloco quadrado catalog-style, nao bubble de IA */}
+      {/* Trigger — quadrado catalog-style como nos cards do site */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`cursor-pointer group fixed bottom-6 right-6 z-50 flex items-center gap-3 border border-border bg-card px-4 py-2.5 shadow-sm transition-all duration-300 hover:border-[#00B5AD]/40 hover:bg-muted ${
@@ -212,7 +212,13 @@ export function Chatbot() {
         }`}
         aria-label="Abrir assistente GUIÁ"
       >
-        <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
+        <div className="relative">
+          <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
+          {/* Dot indicador: verde quando local, cinza quando servidor */}
+          <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
+            localLLM.isReady ? "bg-[#00B5AD]" : "bg-muted-foreground/40"
+          }`} />
+        </div>
         <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
           GUIÁ
         </span>
@@ -222,19 +228,20 @@ export function Chatbot() {
       <div
         className={`fixed z-50 flex flex-col overflow-hidden border border-border bg-card transition-all duration-300 ${
           isOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
-        } bottom-6 right-6 max-sm:bottom-0 max-sm:right-0 max-sm:border-x-0 max-sm:border-b-0 sm:w-[400px]`}
+        } bottom-6 right-6 max-sm:bottom-0 max-sm:right-0 max-sm:border-x-0 max-sm:border-b-0 sm:w-[400px] sm:rounded-xl`}
         style={{ height: "min(620px, calc(100vh - 120px))" }}
       >
-        {/* Header — catalog tag bar como nos cards */}
-        <header className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
+        {/* Header — catalog tag bar com linha de cor no topo */}
+        <header className="relative flex items-center justify-between border-b border-border bg-card px-5 py-4">
+          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#00B5AD] via-[#0077C0] to-[#7AC143]" />
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
               <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                <span style={{ color: "#00B5AD" }}>●</span>{" "}
-                Assistente
+              <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${localLLM.isReady ? "bg-[#00B5AD]" : "bg-muted-foreground/40"}`} />
+                {localLLM.isReady ? "IA local" : "Servidor"}
               </span>
               <h3 className="text-sm font-semibold tracking-tight text-foreground">GUIÁ</h3>
             </div>
@@ -255,15 +262,16 @@ export function Chatbot() {
           </div>
         </header>
 
-        {/* Status line em catálogo, como nos cards */}
+        {/* Status line — animação de gradiente sutil */}
         {isTyping && (
-          <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00B5AD]" />
-            consultando base…
+          <div className="relative flex items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
+            <span>processando…</span>
+            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00B5AD]/30 to-transparent animate-pulse" />
           </div>
         )}
 
-        {/* Messages — cartoes com border-left, sem bubbles */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
           <div className="flex flex-col gap-4">
             {messages.map((msg, i) => {
@@ -276,23 +284,24 @@ export function Chatbot() {
                   style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
                 >
                   {msg.role === "user" ? (
-                    /* Mensagem do usuario — right-aligned, underline catalog style */
+                    /* Mensagem do usuario — right-aligned, underline catalog */
                     <div className="flex flex-col items-end gap-1">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <span className="h-1 w-1 rounded-full bg-[#0077C0]" />
                         você
                       </span>
-                      <span className="border-b border-[#0077C0]/60 pb-0.5 text-sm leading-relaxed text-foreground">
+                      <span className="border-b border-[#0077C0]/60 pb-0.5 text-sm leading-relaxed text-foreground max-w-[85%]">
                         {text}
                       </span>
                     </div>
                   ) : (
-                    /* Resposta do assistente — catalog card com border-left color */
+                    /* Resposta do assistente — catalog card com border-left */
                     <div
-                      className="border-l-2 border-[#00B5AD] pl-4"
+                      className="border-l-2 pl-4 transition-colors hover:border-[#00B5AD]"
                       style={{ borderColor: msg.id === "welcome" ? "#00B5AD" : "#0077C0" }}
                     >
                       <div className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                        <span style={{ color: msg.id === "welcome" ? "#00B5AD" : "#0077C0" }}>●</span>
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: msg.id === "welcome" ? "#00B5AD" : "#0077C0" }} />
                         <span>GUIÁ</span>
                         <MsgCounter n={i} />
                       </div>
@@ -307,17 +316,17 @@ export function Chatbot() {
             })}
 
             {isTyping && (
-              <div className="border-l-2 border-muted pl-4">
+              <div className="border-l-2 border-[#00B5AD]/40 pl-4 animate-fade-in">
                 <div className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00B5AD]" />
-                  GUIÁ · processando…
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
+                  GUIÁ · pensando…
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 py-1">
                   {[0, 1, 2].map((j) => (
                     <span
                       key={j}
-                      className="h-1 w-1 animate-bounce rounded-full bg-muted-foreground/40"
-                      style={{ animationDelay: `${j * 120}ms` }}
+                      className="h-1.5 w-1.5 rounded-full bg-[#00B5AD]/50 animate-bounce"
+                      style={{ animationDelay: `${j * 150}ms` }}
                     />
                   ))}
                 </div>
@@ -325,13 +334,17 @@ export function Chatbot() {
             )}
 
             {error && (
-              <div className="border-l-2 border-red-500 pl-4">
-                <div className="text-sm text-red-500">
-                  Erro ao conectar. Tente novamente.
+              <div className="border-l-2 border-red-500 pl-4 animate-fade-in">
+                <div className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-red-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                  erro
+                </div>
+                <div className="text-sm text-red-500 mb-2">
+                  Não foi possível conectar. Tente novamente.
                 </div>
                 <button
                   onClick={() => setMessages(messages.filter((m) => m.role === "assistant").slice(0, 1))}
-                  className="mt-2 cursor-pointer font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                  className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 border border-border rounded-md hover:bg-muted"
                 >
                   Reiniciar conversa
                 </button>
@@ -342,20 +355,21 @@ export function Chatbot() {
           </div>
         </div>
 
-        {/* Quick questions — catalog tags com color dots */}
+        {/* Quick questions — catalog tags com dots */}
         {messages.length <= 1 && !isTyping && (
           <div className="border-t border-border px-5 py-3">
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <div className="mb-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/50" />
               tópicos sugeridos
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-2">
               {QUICK_QUESTIONS.map((q) => (
                 <button
                   key={q.query}
                   onClick={() => handleSend(q.query)}
-                  className="cursor-pointer flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  className="cursor-pointer group/q flex items-center gap-2 font-mono text-xs text-muted-foreground transition-all hover:text-foreground px-3 py-1.5 rounded-full border border-border/60 hover:border-[#00B5AD]/40 hover:bg-[#00B5AD]/5"
                 >
-                  <span className="h-1.5 w-1.5" style={{ backgroundColor: q.color }} />
+                  <span className="h-2 w-2 rounded-full transition-transform group-hover/q:scale-125" style={{ backgroundColor: q.color }} />
                   {q.label}
                 </button>
               ))}
@@ -363,7 +377,7 @@ export function Chatbot() {
           </div>
         )}
 
-        {/* Input — underline search style como nos filtros do site */}
+        {/* Input — underline search style */}
         <div className="border-t border-border px-5 py-4">
           <div className="relative flex items-center">
             <MessageSquare className="absolute left-0 h-4 w-4 text-muted-foreground" />
