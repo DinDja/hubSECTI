@@ -12,38 +12,29 @@ import { PerfOverlay } from "@/components/perf-overlay"
 import { allEntries, type KnowledgeEntry } from "@/lib/chatbot-knowledge"
 import { rankEntries } from "@/lib/nlu/scorer"
 
-// RAG: seleciona top-N entradas relevantes ah pergunta e monta prompt focado.
-// Modelo local (Llama-3.2-1B) tem contexto limitado; injetar tudo desperdica espaço.
+// Hibrido: prompt fixo forte (regras) + RAG minimo (1-2 entradas relevantes).
+// Modelos leves (1-1.5B) nao conseguem filtrar 40 entradas; injetar poucas melhora.
 function buildLocalSystemPrompt(query: string, context?: string): string {
-  // Ranking por relevância usando o pipeline NLU existente
-  const ranked = rankEntries(allEntries, query).slice(0, 5)
-  // Se nada relevante, fallback para resumo geral curto
+  // RAG minimalista: top 2 entradas mais relevantes apenas
+  const ranked = rankEntries(allEntries, query).slice(0, 2)
   const ctxEntries: KnowledgeEntry[] = ranked.length > 0
     ? ranked.map((s) => s.entry)
-    : allEntries.filter((e) => ["sobre-hub", "sobre-secti", "sistemas-disponiveis", "saudacao"].includes(e.id))
+    : []
 
-  // Detecta perguntas sobre identidade do assistente
-  const identityTokens = ["quem", "voce", "vc", "quem e voce", "quem é você", "qual seu nome", "seu nome", "o que e voce", "o que é você", "apresentacao", "apresente-se", "se apresente"]
-  const q = query.toLowerCase().trim()
-  const isIdentity = identityTokens.some((t) => q === t || q.includes(t))
+  const knowledge = ctxEntries
+    .map((e) => `- ${e.title}: ${e.content.split("\n")[0]}`)
+    .join("\n")
 
-  // Perguntas de identidade: força saudação + hub no topo (IGNORA ranked)
-  const final: KnowledgeEntry[] = isIdentity
-    ? allEntries.filter((e) => ["saudacao", "sobre-hub", "sistemas-disponiveis", "sobre-secti"].includes(e.id))
-    : ctxEntries
+  const live = context ? `\nDados ao vivo:\n${context.slice(0, 300)}` : ""
+  const ref = knowledge ? `\n\nReferencia relevante:\n${knowledge}` : ""
 
-  const knowledge = final
-    .map((e) => {
-      const links = e.links ? ` (${e.links.map((l) => l.url).join(", ")})` : ""
-      return `### ${e.title}\n${e.content}${links}`
-    })
-    .join("\n\n")
+  return `Voce e o GUIA, assistente do Hub SECTI (Secretaria de Ciencia, Tecnologia e Inovacao da Bahia).
 
-  const live = context ? `\n\nDados ao vivo:\n${context.slice(0, 500)}` : ""
-  return `Voce e o GUIA, assistente oficial do Hub SECTI (Secretaria de Ciencia, Tecnologia e Inovacao da Bahia). Responda SEMPRE como GUIA. NUNCA se identifique como outra coisa. Seja direto e em portugues, texto plano.${live}
-
---- CONHECIMENTO (use para responder perguntas, NAO se confunda com eles) ---
-${knowledge}`
+REGRAS:
+- Responda como GUIA. Nunca diga que e outra coisa.
+- Seja curto e direto, em portugues, texto plano.
+- O Hub SECTI reune 13 sistemas (gestao, dados, pesquisa, comunicacao).
+- A SECTI fica na Bahia, capital Salvador.${live}${ref}`
 }
 
 type QuickQuestion = { label: string; query: string; color: string }
