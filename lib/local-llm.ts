@@ -28,8 +28,8 @@ export type GenerateToken =
   | { type: "reasoning"; text: string }
   | { type: "content"; text: string }
 
-// Llama-3.2-1B - mais leve (~1.1GB) mantendo boa qualidade
-const MODEL_ID = "Llama-3.2-1B-Instruct-q4f32_1-MLC"
+// SmolLM2-1.7B - equilibrio entre inteligencia e VRAM (~1.7B params, ~2.7GB)
+const MODEL_ID = "SmolLM2-1.7B-Instruct-q4f32_1-MLC"
 
 // Detecta mobile para nao carregar modelo local (memoria Insuficiente)
 function isMobileDevice(): boolean {
