@@ -144,7 +144,7 @@ type ModelToggleProps = {
 
 function ModelToggle({ useLocal, localReady, onToggle }: ModelToggleProps) {
   const Icon = useLocal ? Cpu : Cloud
-  const label = useLocal ? "IA local (Llama 3.2 1B)" : "Servidor (z-ai GLM-4.5)"
+  const label = useLocal ? "IA local (Qwen2.5 1.5B)" : "Servidor (z-ai GLM-4.5)"
   const accent = useLocal ? "#00B5AD" : "#0077C0"
   return (
     <Tooltip>
@@ -180,6 +180,8 @@ export function Chatbot() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [localRunning, setLocalRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  // IDs de mensagens geradas localmente (para label "via" correto por msg)
+  const localMsgIdsRef = useRef<Set<string>>(new Set())
 
   // Toggle de modelo via context global (também controla overlay de performance).
   const { mode, toggle: toggleModel } = useLocalLLMMode()
@@ -441,6 +443,11 @@ export function Chatbot() {
                         className="text-sm leading-relaxed text-foreground whitespace-pre-wrap"
                         dangerouslySetInnerHTML={{ __html: renderWithThinking(text) }}
                       />
+                      {msg.id !== "welcome" && (
+                        <div className="mt-1 font-mono text-[8px] uppercase tracking-wider text-muted-foreground/40">
+                          {localMsgIdsRef.current.has(msg.id) ? "via IA local" : "via servidor"}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
