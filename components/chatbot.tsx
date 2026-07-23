@@ -118,21 +118,15 @@ export function Chatbot() {
       .map((s) => `[Fonte: ${s.source}]\n${s.content}`)
       .join("\n\n")
 
-    // --- Caminho LOCAL: SmolLM2 pronto, gerar no cliente ---
+    // --- Caminho LOCAL: modelo local pronto, gerar no cliente ---
     if (localLLM.isReady) {
-      // adiciona a MsgUsuario ao estado imediatamente
+      const prevMessages = messages
       const userMsgId = `u-${Date.now()}`
-      const nextMessages: UIMessage[] = [
-        ...messages,
-        {
-          id: userMsgId,
-          role: "user",
-          parts: [{ type: "text", text }],
-        },
-      ]
-      setMessages(nextMessages)
+      setMessages([
+        ...prevMessages,
+        { id: userMsgId, role: "user", parts: [{ type: "text" as const, text }] },
+      ])
 
-      // monta prompt
       const systemPrompt = buildLocalSystemPrompt(context)
       const conv: ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
@@ -142,11 +136,7 @@ export function Chatbot() {
       const assistantMsgId = `a-${Date.now()}`
       setMessages((prev) => [
         ...prev,
-        {
-          id: assistantMsgId,
-          role: "assistant",
-          parts: [{ type: "text", text: "" }],
-        },
+        { id: assistantMsgId, role: "assistant", parts: [{ type: "text" as const, text: "" }] },
       ])
 
       const controller = new AbortController()
@@ -161,40 +151,31 @@ export function Chatbot() {
           signal: controller.signal,
         })) {
           acc += delta
-          // atualiza incrementalmente (sem reconciliação profunda)
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantMsgId ? {
-                ...m,
-                parts: [{ type: "text", text: acc }],
-              } : m
+              m.id === assistantMsgId
+                ? { ...m, parts: [{ type: "text" as const, text: acc }] }
+                : m
             )
           )
         }
-        if (!acc) {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId ? {
-                ...m,
-                parts: [{ type: "text", text: "Desculpe, não consegui gerar resposta localmente. Tente novamente." }],
-              } : m
-            )
-          )
-        }
+        if (acc) return // sucesso, sai
+
+        // acc vazio → fallback silencioso
+        console.warn("Local LLM: resposta vazia, fallback para servidor")
       } catch (err) {
-        console.error("Local LLM erro:", err)
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMsgId ? {
-              ...m,
-              parts: [{ type: "text", text: "Erro ao gerar localmente. Verifique o WebGPU e tente novamente." }],
-            } : m
-          )
-        )
+        console.warn("Local LLM: erro, fallback para servidor", err)
       } finally {
         setLocalRunning(false)
         abortRef.current = null
       }
+
+      // fallback: remove msg local e chama servidor
+      setMessages(prevMessages)
+      await sendMessage(
+        { text },
+        context ? { body: { context } } : undefined
+      )
       return
     }
 
