@@ -249,9 +249,8 @@ export function Chatbot() {
       <div
         className={`fixed z-50 flex flex-col overflow-hidden bg-card transition-all duration-300 ${
           isOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
-        } inset-0 max-sm:inset-0 max-sm:border-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:rounded-xl sm:border sm:border-border`}
+        } inset-0 h-full max-sm:border-0 sm:inset-auto sm:top-auto sm:bottom-6 sm:right-6 sm:h-auto sm:w-[400px] sm:max-h-[620px] sm:rounded-xl sm:border sm:border-border`}
         style={{
-          height: "100%",
           paddingTop: "env(safe-area-inset-top)",
           paddingBottom: "env(safe-area-inset-bottom)",
           paddingLeft: "env(safe-area-inset-left)",
