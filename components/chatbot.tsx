@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { X, ArrowUp, MessageSquare, Copy, Check, RotateCcw } from "lucide-react"
+import { X, ArrowUp, MessageSquare, Copy, Check, RotateCcw, Cpu, Cloud } from "lucide-react"
 import { useChat, type UIMessage } from "@ai-sdk/react"
 import { getAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
@@ -128,6 +128,33 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
+type ModelToggleProps = {
+  useLocal: boolean
+  localReady: boolean
+  onToggle: () => void
+}
+
+function ModelToggle({ useLocal, localReady, onToggle }: ModelToggleProps) {
+  const Icon = useLocal ? Cpu : Cloud
+  const label = useLocal ? "IA local (Llama 3.2 1B)" : "Servidor (z-ai GLM-4.5)"
+  const accent = useLocal ? "#00B5AD" : "#0077C0"
+  return (
+    <button
+      onClick={onToggle}
+      disabled={!localReady && !useLocal}
+      aria-label={`Usando ${label}. Clique para trocar.`}
+      title={`${label} — clique para alternar`}
+      className={`group/m flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+        useLocal
+          ? "border-[#00B5AD]/40 bg-[#00B5AD]/10 text-[#00B5AD]"
+          : "border-[#0077C0]/40 bg-[#0077C0]/10 text-[#0077C0]"
+      }`}
+    >
+      <Icon className="h-4 w-4" style={{ color: accent }} />
+    </button>
+  )
+}
+
 export function Chatbot() {
   const localLLM = useLocalLLM()
 
@@ -141,6 +168,26 @@ export function Chatbot() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [localRunning, setLocalRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+
+  // Toggle de modelo: local (Llama 3.2 1B) vs servidor (z-ai GLM-4.5)
+  // Persiste em localStorage. Default: local pronto → local; senão → servidor.
+  const [useLocalState, setUseLocalState] = useState<"local" | "server">(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("guia-model-pref")
+      if (saved === "local" || saved === "server") return saved
+    }
+    return "server"
+  })
+  // useLocal efetivo: só usa local se preferido E prontoE se local falhou/desligou, reverte pra server na próxima.
+  const useLocal = useLocalState === "local" && localLLM.isReady
+
+  const toggleModel = useCallback(() => {
+    setUseLocalState((prev) => {
+      const next = prev === "local" ? "server" : "local"
+      try { localStorage.setItem("guia-model-pref", next) } catch {}
+      return next
+    })
+  }, [])
 
   const isTyping = (status === "submitted" || status === "streaming") || localRunning
   const msgCount = messages.filter((m) => m.role === "assistant").length
@@ -168,7 +215,7 @@ export function Chatbot() {
       .join("\n\n")
 
     // --- Caminho LOCAL: modelo local pronto, gerar no cliente ---
-    if (localLLM.isReady) {
+    if (useLocal && localLLM.isReady) {
       const prevMessages = messages
       const userMsgId = `u-${Date.now()}`
       setMessages([
@@ -241,7 +288,7 @@ export function Chatbot() {
       { text },
       context ? { body: { context } } : undefined
     )
-  }, [isTyping, localLLM, localLLM.isReady, messages, sendMessage, setMessages])
+  }, [isTyping, useLocal, localLLM, localLLM.isReady, messages, sendMessage, setMessages])
 
   const handleStop = useCallback(() => {
     if (localRunning) {
@@ -280,7 +327,7 @@ export function Chatbot() {
         <div className="relative">
           <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
           <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
-            localLLM.isReady ? "bg-[#00B5AD]" : "bg-muted-foreground/40"
+            useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
           }`} />
         </div>
         <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
@@ -309,8 +356,8 @@ export function Chatbot() {
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${localLLM.isReady ? "bg-[#00B5AD]" : "bg-muted-foreground/40"}`} />
-                {localLLM.isReady ? "IA local" : "Servidor"}
+                <span className={`h-1.5 w-1.5 rounded-full ${useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"}`} />
+                {useLocal ? "IA local" : "Servidor"}
               </span>
               <h3 className="text-sm font-semibold tracking-tight text-foreground">GUIÁ</h3>
             </div>
@@ -322,6 +369,11 @@ export function Chatbot() {
                 onStart={() => {}}
               />
             </div>
+            <ModelToggle
+              useLocal={useLocal}
+              localReady={localLLM.isReady}
+              onToggle={toggleModel}
+            />
             <MsgCounter n={msgCount - 1} />
             <button
               onClick={handleNewChat}
