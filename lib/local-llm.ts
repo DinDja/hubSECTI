@@ -28,8 +28,8 @@ export type GenerateToken =
   | { type: "reasoning"; text: string }
   | { type: "content"; text: string }
 
-// SmolLM2-360M - ultraleve (~580MB VRAM), rapido, p/ devices modestos
-const MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC"
+// Qwen2.5-1.5B - melhor opcao p/ CPU sem GPU (~1.9GB, sem shader-f16, bom PT-BR)
+const MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"
 
 // Detecta mobile para nao carregar modelo local (memoria Insuficiente)
 function isMobileDevice(): boolean {
