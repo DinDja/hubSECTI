@@ -7,6 +7,7 @@ import Link from "next/link"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
 import { buildImageProxyPath } from "@/lib/image-proxy"
 import { useLogAccess } from "@/hooks/use-log-access"
+import { saveChatSnapshot } from "@/lib/chat-store"
 
 const colors = {
   green: "#7AC143",
@@ -520,6 +521,8 @@ export function AboutSection() {
           municipalitiesConecta: conectaStats.municipalitiesCount,
           installedPointsConecta: conectaStats.installedPointsCount,
         })
+
+        saveChatSnapshot("conecta", `Dados atualizados do Conecta Bahia:\n\n  \u2022 **${conectaStats.municipalitiesCount ?? "..."} municípios** com conectividade\n  \u2022 **${conectaStats.territoriesCount ?? "..."} territórios** de identidade cobertos\n  \u2022 **${conectaStats.installedPointsCount ?? "..."} praças** instaladas e ativas\n\nO Conecta Bahia é o programa estadual que leva internet gratuita a praças e espaços públicos nos municípios baianos.`)
 
         setDataStatus("ready")
       } catch (error) {

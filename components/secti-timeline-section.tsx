@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react"
 import { ArrowLeft, ArrowRight, ArrowUpRight, Instagram, Globe, Loader2 } from "lucide-react"
 import { buildImageProxyPath } from "@/lib/image-proxy"
 import { useLogAccess } from "@/hooks/use-log-access"
+import { saveChatSnapshot } from "@/lib/chat-store"
 
 type LinkPreview = {
   url: string
@@ -298,6 +299,11 @@ export function SectiTimelineSection() {
           })
 
           setEvents(uniqueItems)
+          const top3 = uniqueItems.slice(0, 3)
+          const newsText = top3
+            .map((n, i) => `${i + 1}. **${n.title || "Sem título"}** ${n.date ? `(${n.date})` : ""}\n   ${n.description?.slice(0, 120) || ""}...`)
+            .join("\n\n")
+          saveChatSnapshot("noticias", `Últimas notícias do Portal SECTI:\n\n${newsText}`)
           setIsLiveFeed(true)
           setHasMoreNews(payload.items.length === newsLimit && newsLimit < MAX_NEWS_LIMIT)
         } else {

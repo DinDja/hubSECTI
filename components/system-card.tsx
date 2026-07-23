@@ -15,6 +15,8 @@ interface SystemCardProps {
   index: number
   image?: string | StaticImageData
   tag?: string
+  numberOffset?: number
+  highlight?: boolean
 }
 
 function getMshotsPreview(url: string) {
@@ -22,7 +24,7 @@ function getMshotsPreview(url: string) {
   return `https://s.wordpress.com/mshots/v1/${normalizedUrl}?w=1200`
 }
 
-export function SystemCard({ title, description, url, color, icon: Icon, index, image, tag }: SystemCardProps) {
+export function SystemCard({ title, description, url, color, icon: Icon, index, image, tag, numberOffset = 0, highlight }: SystemCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isLoading, setIsLoading] = useState(true)

@@ -119,7 +119,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-5 py-2.5 text-sm font-medium transition-all duration-300 rounded-full group ${
+                className={`relative px-4 py-2.5 text-sm font-medium transition-all duration-300 rounded-md border border-border bg-background shadow-sm group ${
                   activeSection === item.href.slice(1)
                     ? "text-white"
                     : "text-foreground/70 hover:text-foreground"
@@ -127,7 +127,7 @@ export function Header() {
               >
                 {/* Active background */}
                 <span
-                  className={`absolute inset-0 rounded-full transition-all duration-300 ${
+                  className={`absolute inset-0 rounded-md transition-all duration-300 ${
                     activeSection === item.href.slice(1) ? "opacity-100 scale-100" : "opacity-0 scale-95"
                   }`}
                   style={{ backgroundColor: item.color }}
@@ -135,7 +135,7 @@ export function Header() {
                 
                 {/* Hover background */}
                 <span
-                  className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                  className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-10 transition-opacity duration-300"
                   style={{ backgroundColor: item.color }}
                 />
                 
@@ -148,7 +148,7 @@ export function Header() {
             <Link
               href="https://www.secti.ba.gov.br"
               target="_blank"
-              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full border-2 border-foreground/10 hover:border-[#ED1C24] hover:text-[#ED1C24] transition-all duration-300 group"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md border border-border bg-background shadow-sm hover:bg-muted hover:border-[#ED1C24] hover:text-[#ED1C24] transition-all duration-300 group"
             >
               <span>Portal Oficial</span>
               <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

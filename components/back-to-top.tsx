@@ -27,7 +27,7 @@ export function BackToTop() {
       type="button"
       onClick={handleClick}
       aria-label="Voltar ao topo"
-      className="cursor-pointer fixed bottom-6 right-6 z-50 inline-flex items-center justify-center rounded-full bg-foreground text-background p-4 shadow-2xl shadow-black/20 transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground"
+      className="cursor-pointer fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-foreground text-background p-4 shadow-2xl shadow-black/20 transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground sm:bottom-24"
     >
       <ArrowUp className="w-5 h-5" />
     </button>

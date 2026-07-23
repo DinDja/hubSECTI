@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   FolderKanban,
   MapPin,
@@ -8,7 +8,6 @@ import {
   CalendarClock,
   Loader2,
   AlertCircle,
-  RefreshCcw,
   Building2,
   Search,
   ChevronDown,
@@ -16,16 +15,11 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  FileText,
-  Target,
-  Lightbulb,
-  AlertTriangle,
   Eye,
-  ClipboardList,
-  DollarSign,
-  CheckCircle2,
   ImageOff,
 } from "lucide-react"
+import { getCached, setCache, isCacheValid } from "@/lib/cache-db"
+import { saveChatSnapshot } from "@/lib/chat-store"
 
 type Projeto = {
   id: string
@@ -37,6 +31,10 @@ type Projeto = {
   metaFisica?: string; execucaoFisica?: string; execucaoFinanceira?: string
   objetivoGeral?: string; objetivosEspecificos?: string; fotos?: string[]
   updatedAt?: string | null
+  contexto?: string; problemaDemanda?: string; justificativa?: string
+  sustentabilidade?: string; riscos?: string; pendencias?: string; observacoes?: string
+  indicadoresProcesso?: string; indicadoresResultado?: string
+  recursosHumanos?: string; recursosMateriais?: string; numeroProcessoSEI?: string
 }
 
 type ApiResposta = {
@@ -46,6 +44,10 @@ type ApiResposta = {
 const COLORS = { cyan: "#00B5AD", green: "#7AC143", blue: "#0077C0", orange: "#F7941D", yellow: "#FDB913" }
 
 const formatter = new Intl.NumberFormat("pt-BR")
+const CACHE_KEY = "projetos-all-v1"
+const CACHE_TTL_MS = 30 * 60 * 1000
+const DETAILS_CACHE_PREFIX = "projeto-detail-v1"
+const LIMIT = 12
 
 function ListaTexto({ valor }: { valor: unknown }) {
   if (!valor) return null
@@ -53,74 +55,95 @@ function ListaTexto({ valor }: { valor: unknown }) {
   return <>{String(valor)}</>
 }
 
+async function fetchAllProjetos(): Promise<Projeto[]> {
+  const all: Projeto[] = []
+  let offset = 0
+  const pageSize = 50
+
+  while (true) {
+    const params = new URLSearchParams({ limit: String(pageSize), offset: String(offset) })
+    const res = await fetch(`/api/hub/projetos?${params}`, {
+      headers: { Accept: "application/json" },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = (await res.json()) as ApiResposta
+    if ("error" in data) throw new Error(data.error)
+    all.push(...data.projetos)
+    if (!data.hasMore) break
+    offset += data.projetos.length
+  }
+
+  return all
+}
+
 export function ProjetosSection() {
   const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [projetos, setProjetos] = useState<Projeto[]>([])
-  const [total, setTotal] = useState(0)
-  const [offset, setOffset] = useState(0)
-  const [hasMore, setHasMore] = useState(false)
+  const [allProjetos, setAllProjetos] = useState<Projeto[]>([])
+  const [displayCount, setDisplayCount] = useState(LIMIT)
   const [busca, setBusca] = useState("")
   const [filtroStatus, setFiltroStatus] = useState("todos")
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const buscaRef = useRef("")
-  const LIMIT = 12
 
-  const carregar = useCallback(async (novoOffset: number, append: boolean) => {
-    if (novoOffset === 0) setIsLoading(true)
-    else setIsLoadingMore(true)
+  const loadProjetos = useCallback(async () => {
+    setIsLoading(true)
     setError(null)
 
     try {
-      const params = new URLSearchParams({ limit: String(LIMIT), offset: String(novoOffset) })
-      if (buscaRef.current) params.set("search", buscaRef.current)
+      const cached = await getCached<Projeto[]>(CACHE_KEY)
+      if (cached) {
+        setAllProjetos(cached.data)
+        setIsLoading(false)
+      }
 
-      const res = await fetch(`/api/hub/projetos?${params}&ts=${Date.now()}`, {
-        cache: "no-store", headers: { Accept: "application/json" },
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as ApiResposta
-      if ("error" in data) throw new Error(data.error)
+      const fresh = await fetchAllProjetos()
+      await setCache(CACHE_KEY, fresh)
+      setAllProjetos(fresh)
 
-      setProjetos((prev) => (append ? [...prev, ...data.projetos] : data.projetos))
-      setTotal(data.total)
-      setOffset(novoOffset + data.projetos.length)
-      setHasMore(data.hasMore)
+      const statusCount: Record<string, number> = {}
+      for (const p of fresh) {
+        const s = p.status || "Sem status"
+        statusCount[s] = (statusCount[s] || 0) + 1
+      }
+      const statusLines = Object.entries(statusCount)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 8)
+        .map(([s, c]) => `  \u2022 ${s}: ${c} projeto${c > 1 ? "s" : ""}`)
+        .join("\n")
+      saveChatSnapshot("projetos", `Atualmente temos **${fresh.length} projetos** cadastrados no Hub SECTI.\n\nDistribuição por status:\n${statusLines}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar projetos.")
+      if (allProjetos.length === 0) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar projetos.")
+      }
     } finally {
       setIsLoading(false)
-      setIsLoadingMore(false)
     }
   }, [])
 
-  useEffect(() => { buscaRef.current = busca }, [busca])
-
-  const handleBusca = () => {
-    buscaRef.current = busca
-    carregar(0, false)
-  }
-
-  useEffect(() => { carregar(0, false) }, [carregar])
+  useEffect(() => { loadProjetos() }, [loadProjetos])
 
   const statusOptions = useMemo(() => {
     const set = new Set<string>()
-    projetos.forEach((p) => { if (p.status) set.add(p.status) })
+    allProjetos.forEach((p) => { if (p.status) set.add(p.status) })
     return ["todos", ...Array.from(set).sort()]
-  }, [projetos])
+  }, [allProjetos])
 
   const projetosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
-    if (!termo && filtroStatus === "todos") return projetos
-    return projetos.filter((p) => {
+    if (!termo && filtroStatus === "todos") return allProjetos
+    return allProjetos.filter((p) => {
       if (filtroStatus !== "todos" && p.status !== filtroStatus) return false
       if (!termo) return true
       const campos = [p.titulo, p.instituicao, p.unidade, p.responsavel, p.natureza, p.objetivoGeral]
         .filter(Boolean).join(" ").toLowerCase()
       return campos.includes(termo)
     })
-  }, [projetos, busca, filtroStatus])
+  }, [allProjetos, busca, filtroStatus])
+
+  const displayed = useMemo(() => projetosFiltrados.slice(0, displayCount), [projetosFiltrados, displayCount])
+  const hasMore = displayCount < projetosFiltrados.length
+
+  const handleBusca = () => { setDisplayCount(LIMIT) }
 
   return (
     <section id="projetos" className="relative py-24 md:py-32 overflow-hidden">
@@ -153,30 +176,18 @@ export function ProjetosSection() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text" value={busca}
-              onChange={(e) => setBusca(e.target.value)}
+              onChange={(e) => { setBusca(e.target.value); setDisplayCount(LIMIT) }}
               onKeyDown={(e) => e.key === "Enter" && handleBusca()}
               placeholder="Buscar por título, instituição, responsável..."
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-cyan-500/50"
             />
           </div>
-          <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}
+          <select value={filtroStatus} onChange={(e) => { setFiltroStatus(e.target.value); setDisplayCount(LIMIT) }}
             className="px-4 py-2.5 rounded-xl border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-cyan-500/50 cursor-pointer">
             {statusOptions.map((s) => (
               <option key={s} value={s}>{s === "todos" ? "Todos os status" : s}</option>
             ))}
           </select>
-          <button onClick={handleBusca} disabled={isLoading}
-            className="cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-            style={{ backgroundColor: COLORS.blue }}>
-            <Search className="w-4 h-4" />
-            Buscar
-          </button>
-          <button onClick={() => carregar(0, false)} disabled={isLoading}
-            className="cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-            style={{ backgroundColor: COLORS.blue }}>
-            <RefreshCcw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-            Atualizar
-          </button>
         </div>
 
         {/* Loading */}
@@ -189,7 +200,7 @@ export function ProjetosSection() {
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
             <AlertCircle className="w-10 h-10 text-red-500" />
             <p className="text-sm text-muted-foreground max-w-md">{error}</p>
-            <button onClick={() => carregar(0, false)}
+            <button onClick={() => loadProjetos()}
               className="cursor-pointer mt-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
               style={{ backgroundColor: COLORS.blue }}>Tentar novamente</button>
           </div>
@@ -202,13 +213,13 @@ export function ProjetosSection() {
           <>
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-muted-foreground">
-                {total} projeto{total !== 1 ? "s" : ""}
-                {projetosFiltrados.length < total && ` (${projetosFiltrados.length} exibidos)`}
+                {allProjetos.length} projeto{allProjetos.length !== 1 ? "s" : ""}
+                {projetosFiltrados.length < allProjetos.length && ` (${projetosFiltrados.length} exibidos)`}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {projetosFiltrados.map((p, i) => (
+              {displayed.map((p, i) => (
                 <button key={p.id} onClick={() => setSelectedId(p.id)} className="cursor-pointer text-left w-full">
                   <ProjetoCard projeto={p} index={i} />
                 </button>
@@ -216,16 +227,12 @@ export function ProjetosSection() {
             </div>
 
             {/* Load More */}
-            {hasMore && projetosFiltrados.length >= offset && (
+            {hasMore && (
               <div className="flex justify-center mt-10">
-                <button onClick={() => carregar(offset, true)} disabled={isLoadingMore}
-                  className="cursor-pointer inline-flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                <button onClick={() => setDisplayCount((prev) => prev + LIMIT)}
+                  className="cursor-pointer inline-flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:scale-105"
                   style={{ backgroundColor: COLORS.cyan }}>
-                  {isLoadingMore ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</>
-                  ) : (
-                    <><ChevronDown className="w-4 h-4" /> Carregar mais projetos</>
-                  )}
+                  <ChevronDown className="w-4 h-4" /> Carregar mais projetos
                 </button>
               </div>
             )}
@@ -237,7 +244,7 @@ export function ProjetosSection() {
       {selectedId && (
         <ProjetoDetailModal
           projectId={selectedId}
-          projetos={projetos}
+          projetos={allProjetos}
           onClose={() => setSelectedId(null)}
           onNavigate={(id) => setSelectedId(id)}
         />
@@ -472,19 +479,42 @@ function ProjetoDetailModal({
   }, [])
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
     setErro(null)
     setFotoIndex(0)
     setImgErro(false)
 
-    fetch(`/api/hub/projetos/${projectId}`)
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
-      .then((data) => {
+    const cacheKey = `${DETAILS_CACHE_PREFIX}:${projectId}`
+
+    const load = async () => {
+      try {
+        const cached = await getCached<Projeto>(cacheKey)
+        if (cached && !cancelled) {
+          setProjeto(cached.data)
+          setLoading(false)
+        }
+
+        const r = await fetch(`/api/hub/projetos/${projectId}`)
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        const data = await r.json()
         if (data.error) throw new Error(data.error)
-        setProjeto(data as Projeto)
-      })
-      .catch((err) => setErro(err.message))
-      .finally(() => setLoading(false))
+
+        await setCache(cacheKey, data as Projeto)
+
+        if (!cancelled) {
+          setProjeto(data as Projeto)
+        }
+      } catch (err) {
+        if (!cancelled) setErro(err instanceof Error ? err.message : "Erro ao carregar detalhes.")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+
+    return () => { cancelled = true }
   }, [projectId])
 
   const fotos = projeto?.fotos || []

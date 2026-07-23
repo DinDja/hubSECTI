@@ -7,6 +7,7 @@ import { ProjetosSection } from "@/components/projetos-section"
 import { Footer } from "@/components/footer"
 import { BackToTop } from "@/components/back-to-top"
 import { PageAccessLogger } from "@/components/page-access-logger"
+import { Chatbot } from "@/components/chatbot"
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
       <SectiTimelineSection />
       <Footer />
       <BackToTop />
+      <Chatbot />
     </main>
   )
 }

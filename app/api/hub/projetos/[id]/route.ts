@@ -60,7 +60,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json(projeto, {
       status: 200,
-      headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300", "X-Hub-Source": "SECTI-firestore" },
+      headers: { "Cache-Control": "public, max-age=1209600, s-maxage=1209600, stale-while-revalidate=604800", "X-Hub-Source": "SECTI-firestore" },
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro desconhecido"

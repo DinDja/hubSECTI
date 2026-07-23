@@ -49,6 +49,11 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 12, 1), 50)
     const offset = Math.max(Number(searchParams.get("offset")) || 0, 0)
     const search = (searchParams.get("search") || "").trim().toLowerCase()
+    const nocache = searchParams.get("nocache") === "true"
+
+    const cacheControl = nocache
+      ? "no-store, no-cache, must-revalidate, max-age=0"
+      : "public, max-age=1209600, s-maxage=1209600, stale-while-revalidate=604800"
 
     const db = getAdminDb()
     let query: FirebaseFirestore.Query = db.collection("projects").orderBy("updatedAt", "desc")
@@ -68,7 +73,7 @@ export async function GET(req: NextRequest) {
       const sliced = filtered.slice(offset, offset + limit)
       return NextResponse.json({ total, limit, offset, hasMore: offset + limit < total, projetos: sliced }, {
         status: 200,
-        headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600", "X-Hub-Source": "SECTI-firestore" },
+        headers: { "Cache-Control": cacheControl, "X-Hub-Source": "SECTI-firestore" },
       })
     }
 
@@ -81,7 +86,7 @@ export async function GET(req: NextRequest) {
       { total, limit, offset, hasMore: offset + limit < total, projetos: sliced },
       {
         status: 200,
-        headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=600", "X-Hub-Source": "SECTI-firestore" },
+        headers: { "Cache-Control": cacheControl, "X-Hub-Source": "SECTI-firestore" },
       }
     )
   } catch (error) {
