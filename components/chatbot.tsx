@@ -22,7 +22,17 @@ function buildLocalSystemPrompt(query: string, context?: string): string {
     ? ranked.map((s) => s.entry)
     : allEntries.filter((e) => ["sobre-hub", "sobre-secti", "sistemas-disponiveis", "saudacao"].includes(e.id))
 
-  const knowledge = ctxEntries
+  // Detecta perguntas sobre identidade do assistente
+  const identityTokens = ["quem", "voce", "vc", "quem e voce", "quem é você", "qual seu nome", "seu nome", "o que e voce", "o que é você", "apresentacao", "apresente-se", "se apresente"]
+  const q = query.toLowerCase().trim()
+  const isIdentity = identityTokens.some((t) => q === t || q.includes(t))
+
+  // Perguntas de identidade: força saudação + hub no topo (IGNORA ranked)
+  const final: KnowledgeEntry[] = isIdentity
+    ? allEntries.filter((e) => ["saudacao", "sobre-hub", "sistemas-disponiveis", "sobre-secti"].includes(e.id))
+    : ctxEntries
+
+  const knowledge = final
     .map((e) => {
       const links = e.links ? ` (${e.links.map((l) => l.url).join(", ")})` : ""
       return `### ${e.title}\n${e.content}${links}`
@@ -30,9 +40,9 @@ function buildLocalSystemPrompt(query: string, context?: string): string {
     .join("\n\n")
 
   const live = context ? `\n\nDados ao vivo:\n${context.slice(0, 500)}` : ""
-  return `Voce e o GUIA, assistente do Hub SECTI (Secretaria de Ciencia, Tecnologia e Inovacao da Bahia). Responda em portugues, curto e direto, em texto plano (sem markdown). Use a base de conhecimento abaixo para responder.${live}
+  return `Voce e o GUIA, assistente oficial do Hub SECTI (Secretaria de Ciencia, Tecnologia e Inovacao da Bahia). Responda SEMPRE como GUIA. NUNCA se identifique como outra coisa. Seja direto e em portugues, texto plano.${live}
 
-Base de conhecimento relevante para "${query}":
+--- CONHECIMENTO (use para responder perguntas, NAO se confunda com eles) ---
 ${knowledge}`
 }
 
