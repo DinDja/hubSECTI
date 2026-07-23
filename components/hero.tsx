@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from "react"
 import { ArrowDown, ExternalLink } from "lucide-react"
-import { useLocalLLMMode } from "@/lib/local-llm-context"
 
 interface TimelineEvent {
   date: string
@@ -254,15 +253,13 @@ export function Hero() {
   const [scrollY, setScrollY] = useState(0)
   const [hoveredFruit, setHoveredFruit] = useState<number | null>(null)
   const heroRef = useRef<HTMLDivElement>(null)
-  const { useLocal } = useLocalLLMMode()
 
   useEffect(() => {
     setIsVisible(true)
-    if (useLocal) return // nao instala scroll listener em modo otimizado
     const handleScroll = () => setScrollY(window.scrollY)
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [useLocal])
+  }, [])
 
   const parallaxOffset = scrollY * 0.3
 
@@ -412,7 +409,7 @@ export function Hero() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-20">
           <div className="flex items-center justify-between py-6">
             <div className="relative overflow-hidden w-full">
-              <div className={`flex gap-8 min-w-full ${useLocal ? "" : "animate-marquee"}`}>
+              <div className="flex gap-8 min-w-full animate-marquee">
                 {[...carouselItems, ...carouselItems].map((item, i) => (
                   <span 
                     key={i}

@@ -1,17 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useLocalLLMMode } from "@/lib/local-llm-context"
 
 export function AnimatedShapes() {
   const [mounted, setMounted] = useState(false)
-  const { useLocal } = useLocalLLMMode()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  if (!mounted || useLocal) return null
+  if (!mounted) return null
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

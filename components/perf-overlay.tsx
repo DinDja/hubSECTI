@@ -1,48 +1,42 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Cpu, X } from "lucide-react"
-import { useLocalLLMMode } from "@/lib/local-llm-context"
+import { createPortal } from "react-dom"
+import { Cpu } from "lucide-react"
 
-export function PerfOverlay() {
-  const { useLocal } = useLocalLLMMode()
-  const [dismissed, setDismissed] = useState(false)
+type Props = {
+  active: boolean
+}
+
+export function PerfOverlay({ active }: Props) {
+  const [mounted, setMounted] = useState(false)
   const [visible, setVisible] = useState(false)
 
-  // Reset dismiss quando desliga
   useEffect(() => {
-    if (!useLocal) setDismissed(false)
-  }, [useLocal])
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
-    if (useLocal && !dismissed) {
+    if (active) {
       const t = requestAnimationFrame(() => setVisible(true))
       return () => cancelAnimationFrame(t)
     }
     setVisible(false)
-  }, [useLocal, dismissed])
+  }, [active])
 
-  if (!useLocal || dismissed) return null
+  if (!mounted || !active) return null
 
-  return (
+  return createPortal(
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-sm transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 ${
         visible ? "opacity-100" : "opacity-0"
       }`}
       role="dialog"
       aria-label="Modo de IA local ativo"
     >
       <div className="relative mx-4 max-w-md border-l-2 border-[#00B5AD] bg-card/95 px-6 py-7 shadow-2xl sm:rounded-md">
-        <button
-          onClick={() => setDismissed(true)}
-          className="absolute right-3 top-3 flex h-7 w-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Fechar aviso"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
         <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[#00B5AD]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
           modo otimizado
         </div>
 
@@ -57,18 +51,10 @@ export function PerfOverlay() {
 
         <p className="text-sm leading-relaxed text-muted-foreground">
           O site está otimizado para melhor funcionamento da IA local.
-          Animações e processamentos pesados foram pausados para liberar
-          recursos do dispositivo. Volte ao modo servidor para a experiência
-          completa.
+          Feche o assistente para retornar à experiência completa.
         </p>
-
-        <button
-          onClick={() => setDismissed(true)}
-          className="mt-5 cursor-pointer font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
-        >
-          [ continuar otimizado ]
-        </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

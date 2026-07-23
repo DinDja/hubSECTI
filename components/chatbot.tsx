@@ -8,6 +8,7 @@ import { getAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
 import { useLocalLLMMode } from "@/lib/local-llm-context"
 import { DownloadModelButton } from "@/components/download-model-button"
+import { PerfOverlay } from "@/components/perf-overlay"
 import { allEntries, type KnowledgeEntry } from "@/lib/chatbot-knowledge"
 import { rankEntries } from "@/lib/nlu/scorer"
 
@@ -309,6 +310,8 @@ export function Chatbot() {
 
   return (
     <>
+      <PerfOverlay active={isOpen && useLocal} />
+
       {/* Trigger — quadrado catalog-style */}
       <button
         onClick={() => setIsOpen(!isOpen)}

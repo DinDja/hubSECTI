@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { Lightbulb, Users, Rocket, Target, Zap, Globe, ArrowRight, Building2, GraduationCap, FlaskConical, Microscope, Layers, Factory, Briefcase } from "lucide-react"
-import { useLocalLLMMode } from "@/lib/local-llm-context"
 import Link from "next/link"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
 import { buildImageProxyPath } from "@/lib/image-proxy"
@@ -299,10 +298,9 @@ function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string })
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
   const [hasAnimated, setHasAnimated] = useState(false)
-  const { useLocal } = useLocalLLMMode()
 
   useEffect(() => {
-    if (useLocal || hasAnimated) {
+    if (hasAnimated) {
       setCount(end)
       return
     }
@@ -331,7 +329,7 @@ function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string })
 
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
-  }, [end, hasAnimated, useLocal])
+  }, [end, hasAnimated])
 
   return (
     <div ref={ref} className="tabular-nums">
