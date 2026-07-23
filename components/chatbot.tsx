@@ -225,17 +225,17 @@ export function Chatbot() {
 
   return (
     <>
-      {/* Trigger — quadrado catalog-style como nos cards do site */}
+      {/* Trigger — quadrado catalog-style */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`cursor-pointer group fixed bottom-6 right-6 z-50 flex items-center gap-3 border border-border bg-card px-4 py-2.5 shadow-sm transition-all duration-300 hover:border-[#00B5AD]/40 hover:bg-muted ${
+        className={`cursor-pointer group fixed z-50 flex items-center gap-3 border border-border bg-card px-4 py-2.5 shadow-sm transition-all duration-300 hover:border-[#00B5AD]/40 hover:bg-muted ${
           isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
-        }`}
+        } right-6 bottom-6 max-sm:right-4 max-sm:bottom-4`}
+        style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
         aria-label="Abrir assistente GUIÁ"
       >
         <div className="relative">
           <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
-          {/* Dot indicador: verde quando local, cinza quando servidor */}
           <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
             localLLM.isReady ? "bg-[#00B5AD]" : "bg-muted-foreground/40"
           }`} />
@@ -245,15 +245,21 @@ export function Chatbot() {
         </span>
       </button>
 
-      {/* Panel */}
+      {/* Panel — mobile-first: fullscreen no mobile, fixed card no desktop */}
       <div
-        className={`fixed z-50 flex flex-col overflow-hidden border border-border bg-card transition-all duration-300 ${
+        className={`fixed z-50 flex flex-col overflow-hidden bg-card transition-all duration-300 ${
           isOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
-        } bottom-6 right-6 max-sm:bottom-0 max-sm:right-0 max-sm:border-x-0 max-sm:border-b-0 sm:w-[400px] sm:rounded-xl`}
-        style={{ height: "min(620px, calc(100vh - 120px))" }}
+        } inset-0 max-sm:inset-0 max-sm:border-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:rounded-xl sm:border sm:border-border`}
+        style={{
+          height: "100%",
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingLeft: "env(safe-area-inset-left)",
+          paddingRight: "env(safe-area-inset-right)",
+        }}
       >
-        {/* Header — catalog tag bar com linha de cor no topo */}
-        <header className="relative flex items-center justify-between border-b border-border bg-card px-5 py-4">
+        {/* Header */}
+        <header className="relative flex shrink-0 items-center justify-between border-b border-border bg-card px-5 py-4">
           <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#00B5AD] via-[#0077C0] to-[#7AC143]" />
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
@@ -268,10 +274,12 @@ export function Chatbot() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <DownloadModelButton
-              state={localLLM.state}
-              onStart={() => {}}
-            />
+            <div className="hidden sm:block">
+              <DownloadModelButton
+                state={localLLM.state}
+                onStart={() => {}}
+              />
+            </div>
             <MsgCounter n={msgCount - 1} />
             <button
               onClick={() => setIsOpen(false)}
@@ -283,9 +291,9 @@ export function Chatbot() {
           </div>
         </header>
 
-        {/* Status line — animação de gradiente sutil */}
+        {/* Status line */}
         {isTyping && (
-          <div className="relative flex items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
+          <div className="relative flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
             <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
             <span>processando…</span>
             <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00B5AD]/30 to-transparent animate-pulse" />
@@ -305,7 +313,6 @@ export function Chatbot() {
                   style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
                 >
                   {msg.role === "user" ? (
-                    /* Mensagem do usuario — right-aligned, underline catalog */
                     <div className="flex flex-col items-end gap-1">
                       <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <span className="h-1 w-1 rounded-full bg-[#0077C0]" />
@@ -316,7 +323,6 @@ export function Chatbot() {
                       </span>
                     </div>
                   ) : (
-                    /* Resposta do assistente — catalog card com border-left */
                     <div
                       className="border-l-2 pl-4 transition-colors hover:border-[#00B5AD]"
                       style={{ borderColor: msg.id === "welcome" ? "#00B5AD" : "#0077C0" }}
@@ -376,9 +382,9 @@ export function Chatbot() {
           </div>
         </div>
 
-        {/* Quick questions — catalog tags com dots */}
+        {/* Quick questions */}
         {messages.length <= 1 && !isTyping && (
-          <div className="border-t border-border px-5 py-3">
+          <div className="shrink-0 border-t border-border px-5 py-3">
             <div className="mb-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <span className="h-1 w-1 rounded-full bg-muted-foreground/50" />
               tópicos sugeridos
@@ -398,8 +404,8 @@ export function Chatbot() {
           </div>
         )}
 
-        {/* Input — underline search style */}
-        <div className="border-t border-border px-5 py-4">
+        {/* Input */}
+        <div className="shrink-0 border-t border-border px-5 py-4">
           <div className="relative flex items-center">
             <MessageSquare className="absolute left-0 h-4 w-4 text-muted-foreground" />
             <input
@@ -409,12 +415,12 @@ export function Chatbot() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="pergunte ao GUIÁ…"
-              className="w-full border-b border-border bg-transparent py-1.5 pl-6 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-foreground"
+              className="w-full border-b border-border bg-transparent py-2.5 pl-6 text-base sm:text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-foreground"
             />
             {isTyping ? (
               <button
                 onClick={handleStop}
-                className="absolute right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:border-red-500/40 hover:text-red-500"
+                className="absolute right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:border-red-500/40 hover:text-red-500"
                 aria-label="Parar"
               >
                 <span className="h-3 w-3 bg-current" />
@@ -423,7 +429,7 @@ export function Chatbot() {
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isTyping}
-                className="absolute right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:border-[#0077C0]/40 hover:text-[#0077C0] disabled:opacity-40"
+                className="absolute right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:border-[#0077C0]/40 hover:text-[#0077C0] disabled:opacity-40"
                 aria-label="Enviar"
               >
                 <ArrowUp className="h-4 w-4" />

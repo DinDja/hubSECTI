@@ -31,6 +31,15 @@ export type GenerateToken =
 // Qwen2.5-1.5B - equilibrio entre inteligencia e VRAM (~1.5B params, f32, ~1.9GB)
 const MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC"
 
+// Detecta mobile para nao carregar modelo local (memoria Insuficiente)
+function isMobileDevice(): boolean {
+  if (typeof navigator === "undefined") return false
+  const ua = navigator.userAgent || ""
+  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile|CriOS/i.test(ua)
+  const isSmallScreen = typeof window !== "undefined" && window.innerWidth < 768
+  return isMobileUA || isSmallScreen
+}
+
 type EngineRef = {
   engine: MLCEngine | null
   loading: Promise<MLCEngine> | null
@@ -127,8 +136,10 @@ export function useLocalLLM() {
   }, [])
 
   // Inicia download automaticamente na primeira renderização
+  // Pula em mobile (memoria insuficiente - usa servidor)
   useEffect(() => {
     if (autoStartedRef.current) return
+    if (isMobileDevice()) return
     autoStartedRef.current = true
     // Sempre reseta estado antes de iniciar (essencial p/ HMR onde engineRef
     // é recriado mas o React state persiste)
