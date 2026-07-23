@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SiteLoader } from '@/components/site-loader'
+import { LocalLLMProvider } from '@/lib/local-llm-context'
+import { PerfOverlay } from '@/components/perf-overlay'
 import './globals.css'
 
 const inter = Inter({ 
@@ -46,8 +48,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SiteLoader />
-        {children}
+        <LocalLLMProvider>
+          <SiteLoader />
+          {children}
+          <PerfOverlay />
+        </LocalLLMProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

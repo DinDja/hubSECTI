@@ -2,12 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { X, ArrowUp, MessageSquare, Copy, Check, RotateCcw, Cpu, Cloud } from "lucide-react"
-import { ThinkingOrb } from "thinking-orbs"
-import { BorderBeam } from "border-beam"
-import { MetalFx } from "metal-fx"
 import { useChat, type UIMessage } from "@ai-sdk/react"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { getAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
+import { useLocalLLMMode } from "@/lib/local-llm-context"
 import { DownloadModelButton } from "@/components/download-model-button"
 import { allEntries, type KnowledgeEntry } from "@/lib/chatbot-knowledge"
 import { rankEntries } from "@/lib/nlu/scorer"
@@ -114,20 +113,24 @@ function MsgCounter({ n }: { n: number }) {
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation()
-        navigator.clipboard.writeText(text).then(() => {
-          setCopied(true)
-          setTimeout(() => setCopied(false), 1400)
-        }).catch(() => {})
-      }}
-      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-muted-foreground/50 opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
-      aria-label={copied ? "Copiado" : "Copiar mensagem"}
-      title={copied ? "Copiado" : "Copiar mensagem"}
-    >
-      {copied ? <Check className="h-3.5 w-3.5 text-[#00B5AD]" /> : <Copy className="h-3.5 w-3.5" />}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            navigator.clipboard.writeText(text).then(() => {
+              setCopied(true)
+              setTimeout(() => setCopied(false), 1400)
+            }).catch(() => {})
+          }}
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-muted-foreground/50 opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
+          aria-label={copied ? "Copiado" : "Copiar mensagem"}
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-[#00B5AD]" /> : <Copy className="h-3.5 w-3.5" />}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{copied ? "Copiado" : "Copiar mensagem"}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -142,19 +145,23 @@ function ModelToggle({ useLocal, localReady, onToggle }: ModelToggleProps) {
   const label = useLocal ? "IA local (Llama 3.2 1B)" : "Servidor (z-ai GLM-4.5)"
   const accent = useLocal ? "#00B5AD" : "#0077C0"
   return (
-    <button
-      onClick={onToggle}
-      disabled={!localReady && !useLocal}
-      aria-label={`Usando ${label}. Clique para trocar.`}
-      title={`${label} — clique para alternar`}
-      className={`group/m flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
-        useLocal
-          ? "border-[#00B5AD]/40 bg-[#00B5AD]/10 text-[#00B5AD]"
-          : "border-[#0077C0]/40 bg-[#0077C0]/10 text-[#0077C0]"
-      }`}
-    >
-      <Icon className="h-4 w-4" style={{ color: accent }} />
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={onToggle}
+          disabled={!localReady && !useLocal}
+          aria-label={`Usando ${label}. Clique para trocar.`}
+          className={`group/m flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+            useLocal
+              ? "border-[#00B5AD]/40 bg-[#00B5AD]/10 text-[#00B5AD]"
+              : "border-[#0077C0]/40 bg-[#0077C0]/10 text-[#0077C0]"
+          }`}
+        >
+          <Icon className="h-4 w-4" style={{ color: accent }} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -172,25 +179,9 @@ export function Chatbot() {
   const [localRunning, setLocalRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
-  // Toggle de modelo: local (Llama 3.2 1B) vs servidor (z-ai GLM-4.5)
-  // Persiste em localStorage. Default: local pronto → local; senão → servidor.
-  const [useLocalState, setUseLocalState] = useState<"local" | "server">(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("guia-model-pref")
-      if (saved === "local" || saved === "server") return saved
-    }
-    return "server"
-  })
-  // useLocal efetivo: só usa local se preferido E prontoE se local falhou/desligou, reverte pra server na próxima.
-  const useLocal = useLocalState === "local" && localLLM.isReady
-
-  const toggleModel = useCallback(() => {
-    setUseLocalState((prev) => {
-      const next = prev === "local" ? "server" : "local"
-      try { localStorage.setItem("guia-model-pref", next) } catch {}
-      return next
-    })
-  }, [])
+  // Toggle de modelo via context global (também controla overlay de performance).
+  const { mode, toggle: toggleModel } = useLocalLLMMode()
+  const useLocal = mode === "local" && localLLM.isReady
 
   const isTyping = (status === "submitted" || status === "streaming") || localRunning
   const msgCount = messages.filter((m) => m.role === "assistant").length
@@ -327,19 +318,15 @@ export function Chatbot() {
         style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
         aria-label="Abrir assistente GUIÁ"
       >
-        <MetalFx variant="button" strength={0.75} preset="silver">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
-              <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
-                useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
-              }`} />
-            </div>
-            <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
-              GUIÁ
-            </span>
-          </div>
-        </MetalFx>
+        <div className="relative">
+          <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
+          <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-card ${
+            useLocal ? "bg-[#00B5AD]" : "bg-[#0077C0]"
+          }`} />
+        </div>
+        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
+          GUIÁ
+        </span>
       </button>
 
       {/* Panel — mobile-first: fullscreen no mobile, fixed card no desktop */}
@@ -355,9 +342,9 @@ export function Chatbot() {
         }}
       >
         {/* Header */}
-        <BorderBeam size="md" colorVariant="ocean" theme="dark" active={true} strength={0.35} duration={3} className="shrink-0">
-          <header className="relative z-10 flex items-center justify-between border-b border-border/40 bg-card px-5 py-4">
-            <div className="flex items-center gap-3">
+        <header className="relative flex shrink-0 items-center justify-between border-b border-border bg-card px-5 py-4">
+          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#00B5AD] via-[#0077C0] to-[#7AC143]" />
+          <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
               <img src="/img/GUIA.svg" alt="GUIÁ" className="h-5 w-5" />
             </div>
@@ -382,14 +369,18 @@ export function Chatbot() {
               onToggle={toggleModel}
             />
             <MsgCounter n={msgCount - 1} />
-            <button
-              onClick={handleNewChat}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted"
-              aria-label="Nova conversa"
-              title="Nova conversa"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleNewChat}
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted"
+                  aria-label="Nova conversa"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Nova conversa</TooltipContent>
+            </Tooltip>
             <button
               onClick={() => setIsOpen(false)}
               className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted"
@@ -399,13 +390,13 @@ export function Chatbot() {
             </button>
           </div>
         </header>
-        </BorderBeam>
 
         {/* Status line */}
         {isTyping && (
-          <div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
+          <div className="relative flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 px-5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground overflow-hidden">
             <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
             <span>processando…</span>
+            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#00B5AD]/30 to-transparent animate-pulse" />
           </div>
         )}
 
@@ -458,8 +449,14 @@ export function Chatbot() {
                   <span className="h-1.5 w-1.5 rounded-full bg-[#00B5AD] animate-pulse" />
                   GUIÁ · pensando…
                 </div>
-                <div className="py-1">
-                  <ThinkingOrb state="solving" size={20} />
+                <div className="flex gap-1.5 py-1">
+                  {[0, 1, 2].map((j) => (
+                    <span
+                      key={j}
+                      className="h-1.5 w-1.5 rounded-full bg-[#00B5AD]/50 animate-bounce"
+                      style={{ animationDelay: `${j * 150}ms` }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
