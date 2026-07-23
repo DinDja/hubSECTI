@@ -67,6 +67,10 @@ export function useLocalLLM() {
   const autoStartedRef = useRef(false)
 
   const startDownload = useCallback(async (onProgress?: ProgressCb) => {
+    // Guard contra estado inconsistente: isReady mas engine nulo (ex: HMR)
+    if (!engineRef.engine && engineRef.loading === null) {
+      setState({ status: "loading-engine", progress: 0, isReady: false })
+    }
     if (engineRef.engine) {
       setState({ status: "ready", progress: 1, isReady: true })
       return engineRef.engine
@@ -126,6 +130,9 @@ export function useLocalLLM() {
   useEffect(() => {
     if (autoStartedRef.current) return
     autoStartedRef.current = true
+    // Sempre reseta estado antes de iniciar (essencial p/ HMR onde engineRef
+    // é recriado mas o React state persiste)
+    setState({ status: "loading-engine", progress: 0, isReady: false })
     startDownload().catch(() => {})
   }, [startDownload])
 
