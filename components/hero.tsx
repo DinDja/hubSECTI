@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { ArrowDown, ExternalLink } from "lucide-react"
+import { HeroGuiaAnimation } from "@/components/hero-guia-animation"
 
 interface TimelineEvent {
   date: string
@@ -279,6 +280,8 @@ export function Hero() {
       ref={heroRef}
       className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[#FAFAFA]"
     >
+      <HeroGuiaAnimation />
+
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-[#FAFAFA] pointer-events-none" />
       

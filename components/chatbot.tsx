@@ -190,6 +190,14 @@ export function Chatbot() {
   const isTyping = (status === "submitted" || status === "streaming") || localRunning
   const msgCount = messages.filter((m) => m.role === "assistant").length
 
+  // Abertura remota: herói dispara 'guia:open' para abrir o chat.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const onOpen = () => setIsOpen(true)
+    window.addEventListener("guia:open", onOpen)
+    return () => window.removeEventListener("guia:open", onOpen)
+  }, [])
+
   useEffect(() => {
     if (!isOpen) return
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
