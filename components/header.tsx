@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowUpRight, Menu, X } from "lucide-react"
+import { ArrowUpRight, Menu, X, Search } from "lucide-react"
+import { GlobalSearch } from "@/components/global-search"
 import brasao from "@/app/assets/images/brasao-bahia.svg"
 
 const colors = ["#7AC143", "#00B5AD", "#F7941D", "#0077C0", "#ED1C24", "#EC008C", "#FDB913"]
@@ -125,24 +126,22 @@ export function Header() {
                     : "text-foreground/70 hover:text-foreground"
                 }`}
               >
-                {/* Active background */}
                 <span
                   className={`absolute inset-0 rounded-md transition-all duration-300 ${
                     activeSection === item.href.slice(1) ? "opacity-100 scale-100" : "opacity-0 scale-95"
                   }`}
                   style={{ backgroundColor: item.color }}
                 />
-                
-                {/* Hover background */}
                 <span
                   className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-10 transition-opacity duration-300"
                   style={{ backgroundColor: item.color }}
                 />
-                
                 <span className="relative z-10">{item.label}</span>
               </Link>
             ))}
-            
+
+            <GlobalSearch />
+
             <div className="w-px h-6 bg-border mx-2" />
             
             <Link
@@ -188,6 +187,17 @@ export function Header() {
           }`}
         >
           <div className="px-6 py-6 flex flex-col gap-2">
+            <button
+              onClick={() => { setIsMenuOpen(false); window.dispatchEvent(new CustomEvent("open-global-search")) }}
+              className="flex items-center gap-4 px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors group"
+            >
+              <Search size={18} className="text-muted-foreground" />
+              <span className="text-lg font-medium text-muted-foreground">Buscar...</span>
+              <kbd className="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1.5 py-0.5 rounded border">⌘K</kbd>
+            </button>
+
+            <div className="h-px bg-border my-2" />
+
             {navItems.map((item, i) => (
               <Link
                 key={item.href}

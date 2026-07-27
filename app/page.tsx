@@ -11,11 +11,12 @@ import { Chatbot } from "@/components/chatbot"
 import { MapaSection } from "@/components/mapa-section"
 import { agregarMetricasTerritorios } from "@/lib/agregar-metricas"
 import type { MetricasExternas } from "@/lib/agregar-metricas"
-import { simplifyMunicipioName, isInstalledStatus } from "@/lib/conecta-coverage"
+import type { ConectaData } from "@/lib/mapa-types"
+import { simplifyMunicipioName } from "@/lib/conecta-coverage"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
 import territoriosData from "@/lib/territorioMunicipios.json"
-import type { ConectaPoint } from "@/lib/conecta-coverage"
 import { getServerCache, setServerCache } from "@/lib/server-cache"
+import { fetchConectaData } from "@/lib/fetch-conecta"
 
 const normalize = (s: string): string =>
   (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, "").trim()
@@ -30,14 +31,12 @@ for (const t of territoriosData.territorios_de_identidade) {
   }
 }
 
-const CONECTA_API = process.env.CONECTA_API_URL || "https://sharepoint-conecta.obitoandradeuthiha.workers.dev"
 const PROJETOS_API = process.env.PROJETOS_API_URL || "https://projetos-secti.obitoandradeuthiha.workers.dev"
 const METRICAS_CACHE_KEY = "metricas-externas-v1"
 const METRICAS_CACHE_TTL = 5 * 60 * 1000
 
-async function fetchMetricasExternas(): Promise<MetricasExternas | undefined> {
-  const cached = getServerCache<MetricasExternas>(METRICAS_CACHE_KEY, METRICAS_CACHE_TTL)
-  if (cached) return cached
+async function fetchMetricasExternas(): Promise<{ metricas?: MetricasExternas; conectaData?: ConectaData }> {
+  let conectaData: ConectaData | undefined
 
   const metricas: MetricasExternas = {}
 
@@ -52,35 +51,33 @@ async function fetchMetricasExternas(): Promise<MetricasExternas | undefined> {
   } catch { /* fallback */ }
 
   try {
-    const conectaRes = await fetch(CONECTA_API, { signal: AbortSignal.timeout(8000) })
-    if (conectaRes.ok) {
-      const body = await conectaRes.json() as Record<string, unknown> | string
-      const conectaRaw = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown[] | undefined>
+    conectaData = await fetchConectaData()
 
-      const terrConecta = new Map<string, { municipiosConectados: number; installedPoints: number }>()
+    const terrConecta = new Map<string, { municipiosConectados: number; installedPoints: number }>()
 
-      for (const [municipio, pracas] of Object.entries(conectaRaw)) {
-        const rows = Array.isArray(pracas) ? (pracas as ConectaPoint[]) : []
-        const installedRows = rows.filter((r) => !r || isInstalledStatus(r?.status_instalacao))
-        if (installedRows.length === 0) continue
+    for (const [municipio, pracas] of Object.entries(conectaData)) {
+      const rows = Array.isArray(pracas) ? pracas : []
+      const installedRows = rows.filter((r: any) =>
+        !r || String(r?.status_instalacao || '').trim().toLowerCase() === 'instalado'
+      )
+      if (installedRows.length === 0) continue
 
-        const normMun = simplifyMunicipioName(municipio)
-        if (!normMun) continue
+      const normMun = simplifyMunicipioName(municipio)
+      if (!normMun) continue
 
-        const tn = MUNICIPIO_TERRITORIO_MAP.get(normMun)
-        if (!tn) continue
+      const tn = MUNICIPIO_TERRITORIO_MAP.get(normMun)
+      if (!tn) continue
 
-        if (!terrConecta.has(tn)) terrConecta.set(tn, { municipiosConectados: 0, installedPoints: 0 })
-        const entry = terrConecta.get(tn)!
-        entry.municipiosConectados++
-        entry.installedPoints += installedRows.length
-      }
+      if (!terrConecta.has(tn)) terrConecta.set(tn, { municipiosConectados: 0, installedPoints: 0 })
+      const entry = terrConecta.get(tn)!
+      entry.municipiosConectados++
+      entry.installedPoints += installedRows.length
+    }
 
-      for (const [tn, vals] of terrConecta) {
-        if (!metricas[tn]) metricas[tn] = {}
-        metricas[tn].municipiosConectados = vals.municipiosConectados
-        metricas[tn].installedPoints = vals.installedPoints
-      }
+    for (const [tn, vals] of terrConecta) {
+      if (!metricas[tn]) metricas[tn] = {}
+      metricas[tn].municipiosConectados = vals.municipiosConectados
+      metricas[tn].installedPoints = vals.installedPoints
     }
   } catch { /* fallback */ }
 
@@ -115,11 +112,11 @@ async function fetchMetricasExternas(): Promise<MetricasExternas | undefined> {
 
   const result = Object.keys(metricas).length > 0 ? metricas : undefined
   if (result) setServerCache(METRICAS_CACHE_KEY, result, METRICAS_CACHE_TTL)
-  return result
+  return { metricas: result, conectaData }
 }
 
 export default async function Home() {
-  const metricasExternas = await fetchMetricasExternas()
+  const { metricas: metricasExternas, conectaData } = await fetchMetricasExternas()
 
   return (
     <main className="min-h-screen">
@@ -127,7 +124,7 @@ export default async function Home() {
       <Header />
       <Hero />
       <SystemsSection />
-      <MapaSection metricasExternas={metricasExternas} />
+      <MapaSection metricasExternas={metricasExternas} conectaData={conectaData} />
       <ProjetosSection />
       <AboutSection />
       <SectiTimelineSection />

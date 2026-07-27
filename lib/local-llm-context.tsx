@@ -51,6 +51,12 @@ export function LocalLLMProvider({ children }: { children: ReactNode }) {
 
 export function useLocalLLMMode(): Ctx {
   const ctx = useContext(LocalLLMContext)
-  if (!ctx) throw new Error("useLocalLLMMode deve ser usado dentro de LocalLLMProvider")
+  if (!ctx) {
+    if (typeof window === "undefined") {
+      // SSR / static generation – retorna fallback silencioso
+      return { mode: "server", useLocal: false, setMode: () => {}, toggle: () => {} }
+    }
+    throw new Error("useLocalLLMMode deve ser usado dentro de LocalLLMProvider")
+  }
   return ctx
 }

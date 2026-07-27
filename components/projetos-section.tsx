@@ -91,9 +91,15 @@ export function ProjetosSection() {
 
     try {
       const cached = await getCached<Projeto[]>(CACHE_KEY)
-      if (cached) {
+      if (cached && isCacheValid(cached, CACHE_TTL_MS)) {
         setAllProjetos(cached.data)
         setIsLoading(false)
+        return // Cache válido — não busca da rede
+      }
+
+      if (cached) {
+        setAllProjetos(cached.data)
+        // Não seta isLoading=false — mostra stale enquanto busca
       }
 
       const fresh = await fetchAllProjetos()
