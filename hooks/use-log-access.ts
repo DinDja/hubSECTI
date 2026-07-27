@@ -6,7 +6,8 @@ export function useLogAccess(endpoint?: string) {
   useEffect(() => {
     const logAccess = async () => {
       try {
-        const response = await fetch("/.netlify/functions/log-access", {
+        const url = process.env.NEXT_PUBLIC_LOG_ACCESS_URL || "/api/hub/log-access"
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

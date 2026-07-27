@@ -1,0 +1,10 @@
+name = "sharepoint-conecta"
+main = "src/index.js"
+compatibility_date = "2024-12-18"
+
+[[kv_namespaces]]
+binding = "SHAREPOINT_CACHE"
+id = "8142d92a55ea4bb5b675ef716702c7cc"
+
+[triggers]
+crons = ["*/30 * * * *"]

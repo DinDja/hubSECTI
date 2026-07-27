@@ -8,6 +8,7 @@ import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
 import { buildImageProxyPath } from "@/lib/image-proxy"
 import { useLogAccess } from "@/hooks/use-log-access"
 import { saveChatSnapshot } from "@/lib/chat-store"
+import { cachedFetch } from "@/lib/cache-db"
 
 const colors = {
   green: "#7AC143",
@@ -401,60 +402,40 @@ export function AboutSection() {
       isFetching = true
 
       try {
-        const requestTimestamp = Date.now()
-        const [territoriosFetch, conectaFetch] = await Promise.allSettled([
-          fetch(`/api/hub/territorios?nocache=true&ts=${requestTimestamp}`, {
-            cache: "no-store",
-            headers: {
-              Accept: "application/json",
-            },
-          }),
-          fetch(`/api/hub/conecta-resumo?nocache=true&ts=${requestTimestamp}`, {
-            cache: "no-store",
-            headers: {
-              Accept: "application/json",
-            },
-          }),
+        const [territoriosData, conectaFetch] = await Promise.allSettled([
+          cachedFetch<TerritorialApiResponse>("/api/hub/territorios", "about-territorios", 5 * 60 * 1000),
+          cachedFetch<ConectaSummaryApiResponse>("/api/hub/conecta-resumo", "about-conecta", 5 * 60 * 1000).catch(() => null),
         ])
 
-        if (territoriosFetch.status === "rejected") {
+        if (territoriosData.status === "rejected") {
           throw new Error("Falha ao carregar dados de SECTI Territorios.")
         }
 
-        const territoriosRes = territoriosFetch.value
-        if (!territoriosRes.ok) {
-          throw new Error(`Falha ao carregar dados de SECTI Territorios (HTTP ${territoriosRes.status}).`)
-        }
-
-        const territoriosData = (await territoriosRes.json()) as TerritorialApiResponse
+        const territoriosDataValue = territoriosData.value
         const cachedStatsSnapshot = readCachedAboutStats() ?? initialCachedStats
         const conectaFallbackStats = getConectaStatsFromCache(cachedStatsSnapshot)
         let conectaStats = conectaFallbackStats
 
-        if (conectaFetch.status === "fulfilled") {
-          if (conectaFetch.value.ok) {
-            const conectaData = (await conectaFetch.value.json()) as ConectaSummaryApiResponse
-            const summary = conectaData.summary
-            const conectaCoverage: ConectaCoverageStats = {
-              territoriesCount: Number(summary?.territoriesCount || 0),
-              municipalitiesCount: Number(summary?.municipalitiesCount || 0),
-              installedPointsCount: Number(summary?.installedPointsCount || 0),
-            }
-
-            conectaStats = mergeConectaStats(conectaCoverage, conectaFallbackStats)
-          } else {
-            console.warn(`[AboutSection] Falha ao carregar Conecta Bahia (HTTP ${conectaFetch.value.status}).`)
+        if (conectaFetch.status === "fulfilled" && conectaFetch.value) {
+          const conectaData = conectaFetch.value
+          const summary = conectaData.summary
+          const conectaCoverage: ConectaCoverageStats = {
+            territoriesCount: Number(summary?.territoriesCount || 0),
+            municipalitiesCount: Number(summary?.municipalitiesCount || 0),
+            installedPointsCount: Number(summary?.installedPointsCount || 0),
           }
-        } else {
+
+          conectaStats = mergeConectaStats(conectaCoverage, conectaFallbackStats)
+        } else if (conectaFetch.status === "rejected") {
           console.warn("[AboutSection] Erro ao buscar Conecta Bahia:", conectaFetch.reason)
         }
 
         if (!active) return
 
-        const territories = territoriosData.territories || []
+        const territories = territoriosDataValue.territories || []
 
         const totalEntidadesRaw =
-          territoriosData.summary?.totalEntidades ||
+          territoriosDataValue.summary?.totalEntidades ||
           territories.reduce((sum, item) => sum + Number(item?.capacidade?.entidadesTotal || 0), 0)
         const totalEntidades = totalEntidadesRaw > 0
           ? totalEntidadesRaw
@@ -568,19 +549,10 @@ export function AboutSection() {
 
     const loadLatestNewsBackground = async () => {
       try {
-        const response = await fetch(`/api/hub/noticias?limit=${ABOUT_NEWS_LIMIT}&nocache=${Date.now()}`, {
-          cache: "no-store",
-          signal: controller.signal,
-          headers: {
-            Accept: "application/json",
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error(`Falha ao carregar noticias para o fundo: status ${response.status}`)
-        }
-
-        const payload = (await response.json()) as AboutNewsApiResponse
+        const payload = await cachedFetch<AboutNewsApiResponse>(
+          `/api/hub/noticias?limit=${ABOUT_NEWS_LIMIT}`, `about-noticias-${ABOUT_NEWS_LIMIT}`, 5 * 60 * 1000,
+          { signal: controller.signal }
+        )
 
         if (!isMounted) {
           return

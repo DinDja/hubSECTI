@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
 
-const TERRITORIOS_ENDPOINT = "https://secti-territorios.netlify.app/.netlify/functions/sharepoint"
+const TERRITORIOS_ENDPOINT = process.env.TERRITORIOS_API_URL || "https://sharepoint-territorios.seusubdominio.workers.dev"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 async function logAccess(ip: string, path: string, userAgent: string) {
   try {
-    await fetch("/.netlify/functions/log-access", {
+    await fetch(process.env.LOG_ACCESS_URL || "/api/hub/log-access", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

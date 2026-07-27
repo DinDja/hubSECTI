@@ -12,6 +12,7 @@ export type LocalLLMStatus =
   | "unset"
   | "loading-engine"
   | "downloading"
+  | "loading-cache"
   | "loading-model"
   | "ready"
   | "error"
@@ -88,11 +89,16 @@ export function useLocalLLM() {
 
     setState({ status: "loading-engine", progress: 0, isReady: false })
 
+    // Detecta se já baixou antes (cache hit provável) p/ label distinto
+    let cached = false
+    try { cached = localStorage.getItem("guia-llm-ready") === "1" } catch {}
+    const initState = cached ? "loading-cache" : "loading-engine"
+
     engineRef.loading = createEngineWithProgress((ratio) => {
       if (ratio <= 0) {
-        setState((s) => ({ ...s, status: "loading-engine" }))
+        setState((s) => ({ ...s, status: initState }))
       } else if (ratio < 1) {
-        setState({ status: "downloading", progress: ratio, isReady: false })
+        setState({ status: cached ? "loading-cache" : "downloading", progress: ratio, isReady: false })
       } else {
         setState({ status: "loading-model", progress: 1, isReady: false })
       }
@@ -135,16 +141,18 @@ export function useLocalLLM() {
     }
   }, [])
 
-  // Inicia download automaticamente na primeira renderização
+  // Inicia download automaticamente após a animação do hero (7s)
   // Pula em mobile (memoria insuficiente - usa servidor)
   useEffect(() => {
     if (autoStartedRef.current) return
     if (isMobileDevice()) return
     autoStartedRef.current = true
-    // Sempre reseta estado antes de iniciar (essencial p/ HMR onde engineRef
-    // é recriado mas o React state persiste)
-    setState({ status: "loading-engine", progress: 0, isReady: false })
-    startDownload().catch(() => {})
+    // Delay para não travar a animação do hero com download do modelo (~1.9GB)
+    const timer = setTimeout(() => {
+      setState({ status: "loading-engine", progress: 0, isReady: false })
+      startDownload().catch(() => {})
+    }, 7_000)
+    return () => clearTimeout(timer)
   }, [startDownload])
 
   return {

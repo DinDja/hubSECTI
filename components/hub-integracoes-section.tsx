@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { MapPinned, Network, RadioTower, RefreshCcw } from "lucide-react"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
 import { useLogAccess } from "@/hooks/use-log-access"
+import { cachedFetch } from "@/lib/cache-db"
 
 type ConectaSummaryApiResponse = {
   summary?: {
@@ -32,18 +33,9 @@ export function HubIntegracoesSection() {
       setIsLoading(true)
 
       try {
-        const conectaRes = await fetch(`/api/hub/conecta-resumo?nocache=true&ts=${Date.now()}`, {
-          cache: "no-store",
-          headers: {
-            Accept: "application/json",
-          },
-        })
-
-        if (!conectaRes.ok) {
-          throw new Error(`Falha ao carregar dados do Conecta Bahia (HTTP ${conectaRes.status}).`)
-        }
-
-        const conectaData = (await conectaRes.json()) as ConectaSummaryApiResponse
+        const conectaData = await cachedFetch<ConectaSummaryApiResponse>(
+          "/api/hub/conecta-resumo", "hub-conecta-resumo", 5 * 60 * 1000
+        )
         const summary = conectaData.summary
 
         if (!active) return

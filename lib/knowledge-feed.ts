@@ -1,6 +1,7 @@
 import type { KnowledgeEntry } from "./chatbot-knowledge"
 import { allEntries as staticEntries } from "./chatbot-knowledge"
 import territoriosData from "./territorioMunicipios.json"
+import { cachedFetch } from "./cache-db"
 
 const FEED_INTERVAL_MS = 5 * 60 * 1000
 const FEED_KEY = "chatbot-knowledge-feed-v1"
@@ -66,29 +67,32 @@ function territorioEntries(): KnowledgeEntry[] {
 async function fetchLiveEntries(): Promise<KnowledgeEntry[]> {
   const out: KnowledgeEntry[] = []
 
-  const noticiasRes = await fetch("/api/hub/noticias", { headers: { Accept: "application/json" } })
-  if (noticiasRes.ok) {
-    const data = await noticiasRes.json() as { items?: Array<{ title?: string; description?: string; date?: string; href?: string }> }
+  try {
+    const data = await cachedFetch<{ items?: Array<{ title?: string; description?: string; date?: string; href?: string }> }>(
+      "/api/hub/noticias", "feed-noticias", FEED_INTERVAL_MS
+    )
     const items = data.items ?? []
     items.slice(0, 8).forEach((n, i) => {
       const e = entryFromNoticia(n, i)
       if (e) out.push(e)
     })
-  }
+  } catch {}
 
-  const projetosRes = await fetch("/api/hub/projetos?limit=20&offset=0", { headers: { Accept: "application/json" } })
-  if (projetosRes.ok) {
-    const data = await projetosRes.json() as { projetos?: Array<{ titulo?: string; natureza?: string; status?: string; instituicao?: string; responsavel?: string; objetivoGeral?: string; periodo?: string }> }
+  try {
+    const data = await cachedFetch<{ projetos?: Array<{ titulo?: string; natureza?: string; status?: string; instituicao?: string; responsavel?: string; objetivoGeral?: string; periodo?: string }> }>(
+      "/api/hub/projetos?limit=20&offset=0", "feed-projetos", FEED_INTERVAL_MS
+    )
     const projetos = data.projetos ?? []
     projetos.slice(0, 12).forEach((p, i) => {
       const e = entryFromProjeto(p, i)
       if (e) out.push(e)
     })
-  }
+  } catch {}
 
-  const conectaRes = await fetch("/api/hub/conecta-resumo", { headers: { Accept: "application/json" } })
-  if (conectaRes.ok) {
-    const data = await conectaRes.json() as { summary?: { municipalitiesCount?: number; territoriesCount?: number; installedPointsCount?: number } }
+  try {
+    const data = await cachedFetch<{ summary?: { municipalitiesCount?: number; territoriesCount?: number; installedPointsCount?: number } }>(
+      "/api/hub/conecta-resumo", "feed-conecta", FEED_INTERVAL_MS
+    )
     if (data.summary) {
       const { municipalitiesCount, territoriesCount, installedPointsCount } = data.summary
       out.push({
@@ -100,7 +104,7 @@ async function fetchLiveEntries(): Promise<KnowledgeEntry[]> {
         links: [{ label: "Painel Conecta Bahia", url: "https://conectabahia.secti.ba.gov.br" }],
       })
     }
-  }
+  } catch {}
 
   return out
 }

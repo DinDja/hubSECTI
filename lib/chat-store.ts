@@ -70,3 +70,16 @@ export async function getAllChatSnapshots(): Promise<ChatSnapshot[]> {
     return []
   }
 }
+
+export async function clearAllChatSnapshots(): Promise<void> {
+  try {
+    const db = await openDB()
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite")
+      const store = tx.objectStore(STORE_NAME)
+      store.clear()
+      tx.oncomplete = () => { db.close(); resolve() }
+      tx.onerror = () => reject(tx.error)
+    })
+  } catch { /* fail silently */ }
+}

@@ -4,13 +4,14 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { X, ArrowUp, MessageSquare, Copy, Check, RotateCcw, Cpu, Cloud } from "lucide-react"
 import { useChat, type UIMessage } from "@ai-sdk/react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { getAllChatSnapshots } from "@/lib/chat-store"
+import { getAllChatSnapshots, clearAllChatSnapshots } from "@/lib/chat-store"
 import { useLocalLLM, type ChatCompletionMessageParam, type GenerateToken } from "@/lib/local-llm"
 import { useLocalLLMMode } from "@/lib/local-llm-context"
 import { DownloadModelButton } from "@/components/download-model-button"
 import { PerfOverlay } from "@/components/perf-overlay"
 import { allEntries, type KnowledgeEntry } from "@/lib/chatbot-knowledge"
 import { rankEntries } from "@/lib/nlu/scorer"
+import { detectIntent, type Intent } from "@/lib/nlu/intent"
 
 // Hibrido: prompt fixo forte (regras) + RAG minimo (1-2 entradas relevantes).
 // Modelos leves (1-1.5B) nao conseguem filtrar 40 entradas; injetar poucas melhora.
@@ -167,6 +168,20 @@ function ModelToggle({ useLocal, localReady, onToggle }: ModelToggleProps) {
   )
 }
 
+function getContextSourcesForIntent(intent: Intent): string[] | "all" {
+  switch (intent) {
+    case "conecta_stats": return ["conecta"]
+    case "projetos_stats":
+    case "projetos_search": return ["projetos"]
+    case "noticias": return ["noticias"]
+    case "greeting":
+    case "thanks":
+    case "help":
+    case "unknown": return []
+    default: return "all"
+  }
+}
+
 export function Chatbot() {
   const localLLM = useLocalLLM()
 
@@ -216,7 +231,12 @@ export function Chatbot() {
 
     // snapshot da base para contexto (usado por ambos os caminhos)
     const snapshots = await getAllChatSnapshots()
-    const context = snapshots
+    const intent = detectIntent(text)
+    const relevantSources = getContextSourcesForIntent(intent.intent)
+    const filteredSnapshots = relevantSources === "all"
+      ? snapshots
+      : snapshots.filter((s) => relevantSources.includes(s.source))
+    const context = filteredSnapshots
       .map((s) => `[Fonte: ${s.source}]\n${s.content}`)
       .join("\n\n")
 
@@ -269,7 +289,11 @@ export function Chatbot() {
             )
           )
         }
-        if (reasoningAcc || contentAcc) return // sucesso, sai
+        if (reasoningAcc || contentAcc) {
+          localMsgIdsRef.current.add(assistantMsgId)
+          setMessages((prev) => [...prev]) // força re-render p/ label "via local"
+          return // sucesso, sai
+        }
 
         // acc vazio → fallback silencioso
         console.warn("Local LLM: resposta vazia, fallback para servidor")
@@ -309,6 +333,7 @@ export function Chatbot() {
     handleStop()
     setMessages(INITIAL_MESSAGES)
     setInput("")
+    clearAllChatSnapshots()
     requestAnimationFrame(() => inputRef.current?.focus())
   }, [handleStop, setMessages])
 
@@ -452,8 +477,12 @@ export function Chatbot() {
                         dangerouslySetInnerHTML={{ __html: renderWithThinking(text) }}
                       />
                       {msg.id !== "welcome" && (
-                        <div className="mt-1 font-mono text-[8px] uppercase tracking-wider text-muted-foreground/40">
-                          {localMsgIdsRef.current.has(msg.id) ? "via IA local" : "via servidor"}
+                        <div className="mt-1 flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-muted-foreground/40">
+                          {localMsgIdsRef.current.has(msg.id) ? (
+                            <><img src="/img/qwen.svg" alt="Qwen" className="h-3 w-3 text-[#00B5AD]" /> via qwen2.5 1.5b (local)</>
+                          ) : (
+                            <><img src="/img/zhipu.svg" alt="Zhipu" className="h-3 w-3 text-[#0077C0]" /> via glm-4.5-flash (servidor)</>
+                          )}
                         </div>
                       )}
                     </div>

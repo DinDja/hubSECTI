@@ -153,6 +153,28 @@
   animation-play-state: paused;
 }
 
+@keyframes liquid-tremble-1 {
+  0%, 100% { transform: translateX(0px) translateY(0px); }
+  25% { transform: translateX(-3px) translateY(-1px); }
+  50% { transform: translateX(-6px) translateY(0px); }
+  75% { transform: translateX(-3px) translateY(1px); }
+}
+
+@keyframes liquid-tremble-2 {
+  0%, 100% { transform: translateX(-4px) translateY(0px); }
+  25% { transform: translateX(-1px) translateY(1px); }
+  50% { transform: translateX(-7px) translateY(0px); }
+  75% { transform: translateX(-3px) translateY(-1px); }
+}
+
+.animate-liquid-tremble-1 {
+  animation: liquid-tremble-1 3s ease-in-out infinite;
+}
+
+.animate-liquid-tremble-2 {
+  animation: liquid-tremble-2 2.5s ease-in-out infinite;
+}
+
 .site-loader-wordmark {
   position: relative;
   width: min(70vw, 380px);

@@ -1,47 +1,9 @@
 ﻿import { NextRequest, NextResponse } from "next/server"
-import { cert, getApps, initializeApp } from "firebase-admin/app"
-import { getFirestore, Timestamp } from "firebase-admin/firestore"
 
-const PUBLIC_FIELDS = [
-  "titulo", "natureza", "status", "estadoAtual", "instituicao", "unidade",
-  "responsavel", "parceiros", "periodo", "estado", "territorio", "municipio",
-  "beneficiarios", "nmrBeneficiarios", "investimentoReal", "paoe",
-  "fonteFinanciamento", "localExecucao", "metaFisica", "execucaoFisica",
-  "execucaoFinanceira", "objetivoGeral", "objetivosEspecificos", "fotos",
-  "updatedAt",
-]
+const PROJETOS_WORKER = process.env.PROJETOS_WORKER_URL || "https://projetos-secti.obitoandradeuthiha.workers.dev"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
-
-function getAdminDb() {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT
-  if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT nao definida no ambiente.")
-  const sa = JSON.parse(raw)
-  if (!getApps().length) {
-    initializeApp({ credential: cert(sa), projectId: sa.project_id })
-  }
-  return getFirestore()
-}
-
-function toIso(value: unknown): string | null {
-  if (!value) return null
-  if (value instanceof Timestamp) return value.toDate().toISOString()
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === "string") return value
-  return null
-}
-
-function mapPublicProject(doc: FirebaseFirestore.QueryDocumentSnapshot) {
-  const data = doc.data() || {}
-  if (!data.titulo) return null
-  const out: Record<string, unknown> = { id: doc.id }
-  for (const field of PUBLIC_FIELDS) {
-    if (field === "updatedAt") { out.updatedAt = toIso(data.updatedAt); continue }
-    if (data[field] !== undefined) out[field] = data[field]
-  }
-  return out
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,39 +17,42 @@ export async function GET(req: NextRequest) {
       ? "no-store, no-cache, must-revalidate, max-age=0"
       : "public, max-age=1209600, s-maxage=1209600, stale-while-revalidate=604800"
 
-    const db = getAdminDb()
-    let query: FirebaseFirestore.Query = db.collection("projects").orderBy("updatedAt", "desc")
+    const upstream = await fetch(PROJETOS_WORKER, {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    })
 
-    // Count total (with optional search filter)
-    let total = 0
-    if (search) {
-      // Fetch all matching, count server-side
-      const all = await query.get()
-      const allProjects = all.docs.map(mapPublicProject).filter(Boolean) as Record<string, unknown>[]
-      const filtered = allProjects.filter((p) => {
-        const text = [p.titulo, p.instituicao, p.unidade, p.responsavel, p.natureza, p.objetivoGeral]
-          .filter(Boolean).join(" ").toLowerCase()
-        return text.includes(search)
-      })
-      total = filtered.length
-      const sliced = filtered.slice(offset, offset + limit)
-      return NextResponse.json({ total, limit, offset, hasMore: offset + limit < total, projetos: sliced }, {
-        status: 200,
-        headers: { "Cache-Control": cacheControl, "X-Hub-Source": "SECTI-firestore" },
-      })
+    if (!upstream.ok) {
+      const text = await upstream.text()
+      return NextResponse.json(
+        { error: "Falha ao buscar projetos.", details: text.slice(0, 300) },
+        { status: 502 },
+      )
     }
 
-    const allDocs = await query.get()
-    const allMapped = allDocs.docs.map(mapPublicProject).filter(Boolean) as Record<string, unknown>[]
-    total = allMapped.length
-    const sliced = allMapped.slice(offset, offset + limit)
+    const data = await upstream.json()
+    const projetos: Record<string, unknown>[] = data.projetos || []
+
+    const filtered = search
+      ? projetos.filter((p) => {
+          const text = [p.titulo, p.instituicao, p.unidade, p.responsavel, p.natureza, p.objetivoGeral]
+            .filter(Boolean).join(" ").toLowerCase()
+          return text.includes(search)
+        })
+      : projetos
+
+    const total = filtered.length
+    const sliced = filtered.slice(offset, offset + limit)
 
     return NextResponse.json(
       { total, limit, offset, hasMore: offset + limit < total, projetos: sliced },
       {
         status: 200,
-        headers: { "Cache-Control": cacheControl, "X-Hub-Source": "SECTI-firestore" },
-      }
+        headers: {
+          "Cache-Control": cacheControl,
+          "X-Hub-Source": "SECTI-firestore",
+        },
+      },
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro desconhecido"

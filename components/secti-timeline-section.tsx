@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Instagram, Globe, Loader2 } from "
 import { buildImageProxyPath } from "@/lib/image-proxy"
 import { useLogAccess } from "@/hooks/use-log-access"
 import { saveChatSnapshot } from "@/lib/chat-store"
+import { cachedFetch } from "@/lib/cache-db"
 
 type LinkPreview = {
   url: string
@@ -276,19 +277,10 @@ export function SectiTimelineSection() {
       }
 
       try {
-        const response = await fetch(`/api/hub/noticias?limit=${newsLimit}&nocache=${Date.now()}`, {
-          cache: "no-store",
-          signal: controller.signal,
-          headers: {
-            Accept: "application/json",
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error(`Falha ao atualizar noticias: status ${response.status}`)
-        }
-
-        const payload = (await response.json()) as TimelineApiResponse
+        const payload = await cachedFetch<TimelineApiResponse>(
+          `/api/hub/noticias?limit=${newsLimit}`, `timeline-noticias-${newsLimit}`, 5 * 60 * 1000,
+          { signal: controller.signal }
+        )
         if (!isMounted) {
           return
         }

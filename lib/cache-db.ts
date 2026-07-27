@@ -61,3 +61,26 @@ export function isCacheValid(entry: { timestamp: number } | null, ttlMs: number)
   if (!entry) return false
   return Date.now() - entry.timestamp < ttlMs
 }
+
+export async function cachedFetch<T>(
+  url: string,
+  cacheKey: string,
+  ttlMs = 5 * 60 * 1000,
+  options?: RequestInit,
+): Promise<T> {
+  const cached = await getCached<{ data: T }>(cacheKey)
+  if (cached && isCacheValid(cached, ttlMs)) return cached.data.data
+
+  try {
+    const mergedHeaders: Record<string, string> = { Accept: "application/json" }
+    if (options?.headers) Object.assign(mergedHeaders, options.headers as Record<string, string>)
+    const res = await fetch(url, { ...options, headers: mergedHeaders })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = (await res.json()) as T
+    setCache(cacheKey, { data }).catch(() => {})
+    return data
+  } catch (err) {
+    if (cached) return cached.data.data
+    throw err
+  }
+}

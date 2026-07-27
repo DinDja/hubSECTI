@@ -17,7 +17,7 @@ export const revalidate = 0
 
 async function logAccess(ip: string, path: string, userAgent: string) {
   try {
-    await fetch("/.netlify/functions/log-access", {
+    await fetch(process.env.LOG_ACCESS_URL || "/api/hub/log-access", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

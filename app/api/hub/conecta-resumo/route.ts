@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { computeConectaCoverage } from "@/lib/conecta-coverage"
 
-const CONECTA_ENDPOINT = "https://conectabahia.netlify.app/.netlify/functions/sharepoint"
+const CONECTA_ENDPOINT = process.env.CONECTA_API_URL || "https://sharepoint-conecta.seusubdominio.workers.dev"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
