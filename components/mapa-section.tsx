@@ -4,16 +4,30 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import {
   Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut, MapPin,
   Loader2, AlertCircle, ExternalLink, Building2, CheckCircle2,
-  Clock, Wifi, Target, LayoutGrid, ArrowUpRight, Search,
-  Filter, ChevronDown, ChevronUp
+  Clock, Wifi, Target, Search, Filter, ChevronDown, ChevronUp,
+  ArrowUpRight, Info, BarChart3, List, Cpu, FlaskRound,
+  Layers, Factory, Rocket, Signal, SignalHigh, SignalMedium
 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { carregarMapa, TERRITORY_COLORS } from "@/lib/processa-mapa"
-import { METRICAS_DISPONIVEIS } from "@/lib/mapa-data"
+import { METRICAS_DISPONIVEIS, type MetricaInfo } from "@/lib/mapa-data"
 import type { TerritorioInfo, MetricKey, MunicipioRender, ConectaData, ConectaPonto } from "@/lib/mapa-types"
 import type { MetricasExternas } from "@/lib/agregar-metricas"
 import territoriosMunicipios from "@/lib/territorioMunicipios.json"
 import { simplifyMunicipioName } from "@/lib/conecta-coverage"
+
+const METRIC_ICON_MAP: Record<string, React.ReactNode> = {
+  target: <Target size={15} />,
+  "check-circle": <CheckCircle2 size={15} />,
+  clock: <Clock size={15} />,
+  wifi: <Wifi size={15} />,
+  building: <Building2 size={15} />,
+  cpu: <Cpu size={15} />,
+  flask: <FlaskRound size={15} />,
+  layers: <Layers size={15} />,
+  factory: <Factory size={15} />,
+  rocket: <Rocket size={15} />,
+}
 
 function corPorMetrica(valor: number, max: number): string {
   if (max === 0) return "#e2e8f0"
@@ -53,8 +67,7 @@ export function MapaSection({
   conectaData?: ConectaData
 }) {
   const [carregamento, setCarregamento] = useState<CarregamentoState>({ tipo: "carregando" })
-  const [metricaAtiva, setMetricaAtiva] = useState<MetricKey>("totalMunicipios")
-  const [modoCor, setModoCor] = useState<"territorio" | "metrica">("territorio")
+  const [metricaAtiva, setMetricaAtiva] = useState<MetricKey | null>(null)
   const [hoverado, setHoverado] = useState<string | null>(null)
   const [selecionado, setSelecionado] = useState<TerritorioInfo | null>(null)
   const [municipioClicado, setMunicipioClicado] = useState<string | null>(null)
@@ -62,7 +75,7 @@ export function MapaSection({
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(true)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterTerritory, setFilterTerritory] = useState("")
   const [filterMode, setFilterMode] = useState<"instalado" | "todos">("instalado")
@@ -70,6 +83,7 @@ export function MapaSection({
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null)
   const [targetZoom, setTargetZoom] = useState(1)
   const [targetPan, setTargetPan] = useState({ x: 0, y: 0 })
+  const [abaSidebar, setAbaSidebar] = useState<"territorios" | "metricas">("territorios")
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const animFrameRef = useRef<number | null>(null)
@@ -92,7 +106,6 @@ export function MapaSection({
     return () => { active = false }
   }, [metricasExternas])
 
-  // Smooth zoom animation (stops when close enough to target)
   useEffect(() => {
     let doneZoom = false
     let donePan = false
@@ -120,16 +133,16 @@ export function MapaSection({
   const municipios = data?.municipios ?? []
   const territorios = data?.territorios ?? []
 
-  const metricaLabel = METRICAS_DISPONIVEIS.find((m) => m.key === metricaAtiva)
+  const metricaInfo = metricaAtiva ? METRICAS_DISPONIVEIS.find((m) => m.key === metricaAtiva) : null
 
   const metricMax = useMemo(() => {
-    if (modoCor !== "metrica") return 1
+    if (!metricaAtiva) return 1
     let max = 0
     for (const t of territorios) {
       if ((t.metricas[metricaAtiva] || 0) > max) max = t.metricas[metricaAtiva] || 0
     }
     return max || 1
-  }, [territorios, metricaAtiva, modoCor])
+  }, [territorios, metricaAtiva])
 
   const territorioById = useMemo(() => {
     const map = new Map<number, TerritorioInfo>()
@@ -139,12 +152,12 @@ export function MapaSection({
 
   const municipioCor = useMemo(() => {
     const m = new Map<number, string>()
-    if (modoCor === "territorio") return m
+    if (!metricaAtiva) return m
     for (const t of territorios) {
       m.set(t.id, corPorMetrica(t.metricas[metricaAtiva] || 0, metricMax))
     }
     return m
-  }, [territorios, modoCor, metricaAtiva, metricMax])
+  }, [territorios, metricaAtiva, metricMax])
 
   const territorioColorMap = useMemo(() => {
     const map: Record<string, string> = {}
@@ -154,7 +167,6 @@ export function MapaSection({
     return map
   }, [territorios])
 
-  // Conecta data processing
   const installedSet = useMemo(() => {
     const set = new Set<string>()
     if (!conectaData) return set
@@ -167,8 +179,25 @@ export function MapaSection({
     return set
   }, [conectaData])
 
+  const conectaCountMap = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!conectaData) return map
+    for (const [nome, pontos] of Object.entries(conectaData)) {
+      const items = Array.isArray(pontos) ? pontos : []
+      const installed = items.filter((p) => isInstalled(p?.status_instalacao))
+      if (installed.length > 0) {
+        map.set(simplifyMunicipioName(nome), installed.length)
+      }
+    }
+    return map
+  }, [conectaData])
+
   const hasConecta = (nomeTopo: string) => {
     return installedSet.has(simplifyMunicipioName(nomeTopo))
+  }
+
+  const getConectaCount = (nomeTopo: string): number => {
+    return conectaCountMap.get(simplifyMunicipioName(nomeTopo)) || 0
   }
 
   const getConectaPoints = (nomeTopo: string): ConectaPonto[] => {
@@ -198,7 +227,6 @@ export function MapaSection({
     return installedSet.size
   }, [installedSet])
 
-  // Filtered
   const allTerritories = useMemo(() => {
     return [...new Set(territorios.map((t) => t.nome))].sort()
   }, [territorios])
@@ -217,12 +245,23 @@ export function MapaSection({
     return municipios.filter((m) => passesFilters(m.nome))
   }, [municipios, searchTerm, filterTerritory, filterMode])
 
-  // Centroids for point markers
   const municipioCentroids = useMemo(() => {
     return new Map(municipios.map((m) => [m.nome, getCentroid(m.d)]))
   }, [municipios])
 
-  // Territory outline for filter
+  const territorioCentroids = useMemo(() => {
+    const map = new Map<number, { x: number; y: number }>()
+    for (const t of territorios) {
+      let sumX = 0, sumY = 0, count = 0
+      for (const m of t.municipios) {
+        const c = municipioCentroids.get(m)
+        if (c) { sumX += c.x; sumY += c.y; count++ }
+      }
+      if (count > 0) map.set(t.id, { x: sumX / count, y: sumY / count })
+    }
+    return map
+  }, [territorios, municipioCentroids])
+
   const territoryOutline = useMemo(() => {
     if (!filterTerritory || !municipios.length) return ""
     const territorioMunicipios = municipios.filter((m) => {
@@ -230,10 +269,21 @@ export function MapaSection({
       return t?.nome === filterTerritory
     })
     if (!territorioMunicipios.length) return ""
-    // Approximate outline: union of all paths with thick stroke
     const paths = territorioMunicipios.map((m) => m.d).join(" ")
     return paths
   }, [filterTerritory, municipios])
+
+  const hoverTerritoryOutline = useMemo(() => {
+    if (!hoverado || !municipios.length || filterTerritory) return ""
+    const mun = municipios.find((m) => m.nome === hoverado)
+    if (!mun) return ""
+    const t = territorioById.get(mun.territorioId)
+    if (!t) return ""
+    const paths = municipios
+      .filter((m) => territorioById.get(m.territorioId)?.nome === t.nome)
+      .map((m) => m.d).join(" ")
+    return paths
+  }, [hoverado, municipios, filterTerritory])
 
   const handleMouseDown = (e: React.MouseEvent) => setDragStart({ x: e.clientX, y: e.clientY })
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -259,6 +309,58 @@ export function MapaSection({
       municipios.find((m) => m.nome === nomeMunicipio)?.territorioId ?? 0
     )
     if (t) setSelecionado(t)
+  }
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { municipioNome: string }
+      if (!detail?.municipioNome) return
+      const matched = municipios.find((m) => sameMunicipio(m.nome, detail.municipioNome))
+      if (!matched) return
+      handleClickMunicipio(matched.nome)
+      setTimeout(() => {
+        document.getElementById("mapa")?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 100)
+    }
+    window.addEventListener("nav:focus-mapa-municipio", handler)
+    return () => window.removeEventListener("nav:focus-mapa-municipio", handler)
+  }, [municipios])
+
+  const handleSelectMetrica = (key: MetricKey | null) => {
+    setMetricaAtiva(key)
+    if (key) setAbaSidebar("metricas")
+  }
+
+  const renderMetricaCard = (m: MetricaInfo) => {
+    const isActive = metricaAtiva === m.key
+    const totalValue = territorios.reduce((s, t) => s + (t.metricas[m.key] || 0), 0)
+    return (
+      <button
+        key={m.key}
+        onClick={() => handleSelectMetrica(isActive ? null : m.key)}
+        className={`group flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 cursor-pointer
+          ${isActive
+            ? "border-foreground/30 bg-foreground/[0.03] shadow-sm ring-1 ring-foreground/10"
+            : "border-border hover:border-slate-300 hover:bg-muted/30 hover:shadow-sm"
+          }`}
+      >
+        <span
+          className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 bg-muted"}`}
+          style={isActive ? { backgroundColor: m.color } : {}}
+        >
+          {METRIC_ICON_MAP[m.icon] || <Target size={15} />}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className={`text-xs font-semibold ${isActive ? "text-foreground" : "text-foreground/80"}`}>{m.label}</p>
+            <span className={`text-[11px] font-bold ${isActive ? "" : "text-muted-foreground"}`} style={isActive ? { color: m.color } : {}}>
+              {totalValue}
+            </span>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{m.description}</p>
+        </div>
+      </button>
+    )
   }
 
   if (carregamento.tipo === "carregando") {
@@ -294,44 +396,12 @@ export function MapaSection({
 
   const wrapperClass = isFullscreen
     ? "fixed inset-0 z-[60] bg-[#f8fafc] flex flex-col"
-    : "w-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4"
+    : "w-full grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4"
 
   return (
     <section id="mapa" className="py-24 md:py-32">
       <div className="px-6 md:px-10 lg:px-16 max-w-[1600px] mx-auto">
         <MapaHeader />
-
-        {/* Controls */}
-        <div className="mt-6 mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="inline-flex rounded-xl border border-border bg-card overflow-hidden">
-              <button
-                onClick={() => setModoCor("territorio")}
-                className={`cursor-pointer px-4 py-2 text-sm font-medium transition-colors ${modoCor === "territorio" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-              >
-                Por território
-              </button>
-              <button
-                onClick={() => setModoCor("metrica")}
-                className={`cursor-pointer px-4 py-2 text-sm font-medium transition-colors ${modoCor === "metrica" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-              >
-                Por métrica
-              </button>
-            </div>
-
-            {modoCor === "metrica" && (
-              <select value={metricaAtiva} onChange={(e) => setMetricaAtiva(e.target.value as MetricKey)} className="cursor-pointer rounded-xl border border-border bg-card px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-cyan-500/50">
-                {METRICAS_DISPONIVEIS.map((m) => (
-                  <option key={m.key} value={m.key}>{m.label}</option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            {municipios.length} municípios · {territorios.length} territórios
-          </p>
-        </div>
 
         {/* Mapa + sidebar */}
         <div className={wrapperClass}>
@@ -381,7 +451,7 @@ export function MapaSection({
                   const hasConn = hasConecta(f.nome)
                   const passes = passesFilters(f.nome)
 
-                  const baseCor = modoCor === "metrica"
+                  const baseCor = metricaAtiva
                     ? (municipioCor.get(f.territorioId) || "#e2e8f0")
                     : f.cor
 
@@ -409,7 +479,6 @@ export function MapaSection({
                   )
                 })}
 
-                {/* Territory outline when filtering */}
                 {filterTerritory && territoryOutline && (
                   <g className="pointer-events-none">
                     <path d={territoryOutline} fill="none" stroke="#FFFFFF" strokeWidth="6" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
@@ -417,23 +486,31 @@ export function MapaSection({
                   </g>
                 )}
 
-                {/* Point markers for installed municipalities */}
-                {conectaData && municipios.map((f) => {
-                  if (!hasConecta(f.nome) || !passesFilters(f.nome)) return null
-                  const centroid = municipioCentroids.get(f.nome)
+                {hoverTerritoryOutline && (
+                  <g className="pointer-events-none">
+                    <path d={hoverTerritoryOutline} fill="none" stroke="#FFFFFF" strokeWidth="5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" opacity="0.7" />
+                    <path d={hoverTerritoryOutline} fill="none" stroke="#6366f1" strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" opacity="0.5" strokeDasharray="6 3" />
+                  </g>
+                )}
+
+                {conectaData && territorios.map((t) => {
+                  const total = t.metricas.installedPoints || 0
+                  if (total === 0) return null
+                  const centroid = territorioCentroids.get(t.id)
                   if (!centroid) return null
-                  const isHovered = hoverado === f.nome
-                  const isSelected = municipioClicado === f.nome
-                  const active = isHovered || isSelected
-                  const scale = active ? 1.6 : 1
-                  const fillColor = isSelected ? "#EF4444" : "#1E3A8A"
-                  const glowFilter = active ? (isSelected ? "url(#marker-glow-red)" : "url(#marker-glow)") : undefined
+                  const isSelected = selecionado?.id === t.id
+                  const bw = total >= 100 ? 48 : total >= 10 ? 42 : 36
+                  const bh = 20
                   return (
-                    <g key={`marker-${f.geocodigo}`}
+                    <g key={`terr-marker-${t.id}`}
                       className="pointer-events-none"
-                      style={{ transform: `scale(${scale})`, transformOrigin: `${centroid.x}px ${centroid.y}px`, transition: "transform 0.2s ease-out" }}
+                      style={{ transform: `scale(${isSelected ? 1.15 : 1})`, transformOrigin: `${centroid.x}px ${centroid.y}px`, transition: "transform 0.2s ease-out" }}
                     >
-                      <circle cx={centroid.x} cy={centroid.y} r={4} fill={fillColor} stroke="#FFFFFF" strokeWidth="1.5" filter={glowFilter} />
+                      <rect x={centroid.x - bw / 2} y={centroid.y - bh / 2} width={bw} height={bh} rx={bh / 2} fill="white" stroke={isSelected ? "#EF4444" : "#1E3A8A"} strokeWidth="1.5" opacity="0.95" filter="url(#marker-glow)" />
+                      <circle cx={centroid.x - bw / 2 + 14} cy={centroid.y} r={5} fill={isSelected ? "#EF4444" : "#1E3A8A"} />
+                      <text x={centroid.x + 4} y={centroid.y + 1} textAnchor="middle" dominantBaseline="central" fill={isSelected ? "#EF4444" : "#1E3A8A"} fontSize={total >= 100 ? 9 : 10} fontWeight="bold" fontFamily="system-ui, sans-serif">
+                        {total}
+                      </text>
                     </g>
                   )
                 })}
@@ -453,6 +530,56 @@ export function MapaSection({
               </button>
             </div>
 
+            {/* Legend - shown when metric is active */}
+            {metricaAtiva && metricaInfo && (
+              <div className="absolute bottom-4 left-4 backdrop-blur-xl bg-white/90 shadow-xl rounded-xl border border-white/50 px-4 py-3 z-10 min-w-[220px]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{metricaInfo.label}</span>
+                  <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{metricMax} max</span>
+                </div>
+                <div className="relative h-4 w-full rounded-lg overflow-hidden border border-slate-200" style={{ background: `linear-gradient(to right, rgb(238,47,90), rgb(178,147,40), rgb(78,207,100))` }}>
+                  <div className="absolute inset-0 flex justify-between items-end px-0.5 pb-0.5">
+                    <span className="w-0.5 h-2 bg-white/60 rounded-full" />
+                    <span className="w-0.5 h-2.5 bg-white/60 rounded-full" />
+                    <span className="w-0.5 h-3 bg-white/60 rounded-full" />
+                    <span className="w-0.5 h-2.5 bg-white/60 rounded-full" />
+                    <span className="w-0.5 h-2 bg-white/60 rounded-full" />
+                  </div>
+                </div>
+                <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
+                  <span>0</span>
+                  <span>{Math.round(metricMax * 0.25)}</span>
+                  <span>{Math.round(metricMax * 0.5)}</span>
+                  <span>{Math.round(metricMax * 0.75)}</span>
+                  <span className="font-semibold text-foreground">{metricMax}</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground italic mt-1.5 leading-tight">
+                  Em <strong>verde</strong>: maior valor · Em <strong>vermelho</strong>: menor valor
+                </p>
+              </div>
+            )}
+
+            {/* Stats bar on map */}
+            {conectaData && !metricaAtiva && (
+              <div className="absolute bottom-4 left-4 backdrop-blur-xl bg-white/85 px-3.5 py-2.5 rounded-xl shadow-lg border border-white/50 pointer-events-none hidden md:flex items-center gap-5 z-10">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 h-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-60" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-700" />
+                  </span>
+                  <span className="text-[11px] text-slate-700 font-semibold">{municipiosConectados} <span className="font-normal text-slate-500">mun. conectados</span></span>
+                </div>
+                <div className="w-px h-4 bg-slate-200" />
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="text-[11px] text-slate-700 font-semibold">{installedTotal} <span className="font-normal text-slate-500">pontos instalados</span></span>
+                </div>
+              </div>
+            )}
+
             {/* Municipality hover tooltip */}
             {hoverado && mousePos && (() => {
               const t = territorioById.get(municipios.find((m) => m.nome === hoverado)?.territorioId ?? 0)
@@ -461,12 +588,14 @@ export function MapaSection({
               const posStyle = isLeft
                 ? { left: `${mousePos.x + 18}px`, top: `${mousePos.y - (isTop ? 0 : 40)}px` }
                 : { right: `${(mapContainerRef.current?.clientWidth ?? 600) - mousePos.x + 18}px`, top: `${mousePos.y - (isTop ? 0 : 40)}px` }
+
+              const metricValue = metricaAtiva && t ? t.metricas[metricaAtiva] || 0 : null
+
               return (
                 <div
                   className="absolute bg-white/95 backdrop-blur-xl px-4 py-3 rounded-xl border border-slate-200/80 shadow-2xl pointer-events-none z-20 min-w-[190px]"
                   style={{
                     ...posStyle,
-                    animation: "mapa-tooltip-in 0.2s ease-out forwards",
                   }}
                 >
                   <div className="flex items-center gap-1.5 mb-1">
@@ -480,6 +609,16 @@ export function MapaSection({
                         <span className="w-2.5 h-2.5 rounded-sm ring-1 ring-offset-1 ring-slate-300/50 shadow-sm" style={{ backgroundColor: TERRITORY_COLORS[t.id - 1] || "#e2e8f0" }} />
                         <p className="text-[11px] text-slate-600 font-medium">{t.nome}</p>
                       </div>
+
+                      {/* Metric value in tooltip */}
+                      {metricaAtiva && metricaInfo && metricValue !== null && (
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-md px-2 py-1.5 -mx-1">
+                          <span className="text-slate-400">{METRIC_ICON_MAP[metricaInfo.icon]}</span>
+                          <span className="text-[11px] text-slate-500">{metricaInfo.label}:</span>
+                          <span className="text-xs font-bold text-slate-800">{metricValue}</span>
+                        </div>
+                      )}
+
                       {hasConecta(hoverado) && (
                         <div className="flex items-center gap-2">
                           <span className="relative flex h-2.5 w-2.5">
@@ -502,191 +641,282 @@ export function MapaSection({
                 </div>
               )
             })()}
-
-            {/* Stats bar on map */}
-            {conectaData && (
-              <div className="absolute bottom-4 left-4 backdrop-blur-xl bg-white/85 px-3.5 py-2.5 rounded-xl shadow-lg border border-white/50 pointer-events-none hidden md:flex items-center gap-5 z-10">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 h-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-600 opacity-60" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-700" />
-                  </span>
-                  <span className="text-[11px] text-slate-700 font-semibold">{municipiosConectados} <span className="font-normal text-slate-500">mun. conectados</span></span>
-                </div>
-                <div className="w-px h-4 bg-slate-200" />
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                  </span>
-                  <span className="text-[11px] text-slate-700 font-semibold">{installedTotal} <span className="font-normal text-slate-500">pontos instalados</span></span>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - redesigned */}
           {!isFullscreen && (
             <aside className="rounded-2xl border border-border bg-card p-5 h-[600px] lg:h-[700px] overflow-y-auto space-y-4">
-              {/* Filters panel */}
-              {conectaData && (
-                <>
-                  <button
-                    onClick={() => setFiltersOpen(!filtersOpen)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-colors ${filtersOpen ? "bg-violet-50 text-violet-700 border border-violet-200" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Filter size={14} />
-                      <span>{filtersOpen ? "Ocultar Filtros" : "Mostrar Filtros"}</span>
+
+              {/* Abas: Territórios | Indicadores */}
+              <div className="inline-flex rounded-xl border border-border bg-muted/30 overflow-hidden w-full">
+                <button
+                  onClick={() => { setAbaSidebar("territorios"); setMetricaAtiva(null) }}
+                  className={`cursor-pointer flex-1 px-3 py-2 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${abaSidebar === "territorios" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  <List size={14} />
+                  Territórios
+                </button>
+                <button
+                  onClick={() => setAbaSidebar("metricas")}
+                  className={`cursor-pointer flex-1 px-3 py-2 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${abaSidebar === "metricas" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                >
+                  <BarChart3 size={14} />
+                  Indicadores
+                </button>
+              </div>
+
+              {/* === ABA INDICADORES === */}
+              {abaSidebar === "metricas" && (
+                <div className="space-y-4">
+                  {/* Grupo: Projetos */}
+                  <div>
+                    <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Target size={11} /> Projetos
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {METRICAS_DISPONIVEIS.filter(m => m.key.startsWith("projeto") || m.key === "totalProjetos").map(renderMetricaCard)}
                     </div>
-                    {filtersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  </button>
+                  </div>
 
-                  {filtersOpen && (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {/* Search */}
-                      <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="text"
-                          placeholder="Buscar município..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-xs outline-none focus:ring-2 focus:ring-cyan-500/50"
-                        />
+                  {/* Grupo: Conecta */}
+                  <div>
+                    <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Wifi size={11} /> Conecta Bahia
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {METRICAS_DISPONIVEIS.filter(m => m.key === "municipiosConectados" || m.key === "installedPoints").map(renderMetricaCard)}
+                    </div>
+                  </div>
+
+                  {/* Grupo: CT&I */}
+                  <div>
+                    <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Cpu size={11} /> CT&I
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {METRICAS_DISPONIVEIS.filter(m => ["icts","centrosPesquisa","espacoDinamizadoress","parquesTecnologicos","incubadorasAceleradoras"].includes(m.key)).map(renderMetricaCard)}
+                    </div>
+                  </div>
+
+                  {/* Legenda expandida - mapa de cores */}
+                  {metricaAtiva && metricaInfo && (
+                    <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Legenda</p>
+                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{territorios.length} territórios</span>
                       </div>
-
-                      {/* Territory filter */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setShowTerritoryDropdown(!showTerritoryDropdown)}
-                          className="w-full flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-xs text-left"
-                        >
-                          <span className={filterTerritory ? "text-foreground" : "text-muted-foreground"}>
-                            {filterTerritory || "Todos os territórios"}
-                          </span>
-                          <ChevronDown size={14} className={showTerritoryDropdown ? "rotate-180 transition-transform" : "transition-transform"} />
-                        </button>
-                        {showTerritoryDropdown && (
-                          <div className="absolute z-30 mt-1 w-full bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <button
-                              onClick={() => { setFilterTerritory(""); setShowTerritoryDropdown(false) }}
-                              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${!filterTerritory ? "bg-violet-50 text-violet-700 font-semibold" : ""}`}
-                            >
-                              Todos os territórios
-                            </button>
-                            {allTerritories.map((t) => (
-                              <button
-                                key={t}
-                                onClick={() => { setFilterTerritory(t); setShowTerritoryDropdown(false) }}
-                                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted flex items-center gap-2 ${filterTerritory === t ? "bg-violet-50 text-violet-700 font-semibold" : ""}`}
-                              >
-                                <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: territorioColorMap[t] || "#94A3B8" }} />
-                                {t}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Filter mode */}
-                      <div>
-                        <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1.5">Modo de visualização</p>
-                        <div className="inline-flex rounded-lg border border-border overflow-hidden">
-                          <button
-                            onClick={() => setFilterMode("instalado")}
-                            className={`px-3 py-1.5 text-[10px] font-medium transition-colors cursor-pointer ${filterMode === "instalado" ? "bg-cyan-600 text-white" : "text-muted-foreground hover:bg-muted"}`}
-                          >
-                            Instalados
-                          </button>
-                          <button
-                            onClick={() => setFilterMode("todos")}
-                            className={`px-3 py-1.5 text-[10px] font-medium transition-colors cursor-pointer ${filterMode === "todos" ? "bg-cyan-600 text-white" : "text-muted-foreground hover:bg-muted"}`}
-                          >
-                            Todos
-                          </button>
+                      <div className="relative h-3 w-full rounded-full overflow-hidden border border-border" style={{ background: `linear-gradient(to right, rgb(238,47,90), rgb(178,147,40), rgb(78,207,100))` }}>
+                        <div className="absolute inset-0 flex justify-between items-end px-0.5 pb-0.5">
+                          <span className="w-0.5 h-1.5 bg-white/60 rounded-full" />
+                          <span className="w-0.5 h-2 bg-white/60 rounded-full" />
+                          <span className="w-0.5 h-2.5 bg-white/60 rounded-full" />
+                          <span className="w-0.5 h-2 bg-white/60 rounded-full" />
+                          <span className="w-0.5 h-1.5 bg-white/60 rounded-full" />
                         </div>
+                      </div>
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>0</span>
+                        <span>{Math.round(metricMax * 0.25)}</span>
+                        <span>{Math.round(metricMax * 0.5)}</span>
+                        <span>{Math.round(metricMax * 0.75)}</span>
+                        <span className="font-semibold text-foreground">{metricMax}</span>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground italic">
+                        Em <strong>verde</strong>: maior valor · Em <strong>vermelho</strong>: menor valor
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Ranking de territórios */}
+                  {metricaAtiva && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                        <span>Ranking por {metricaInfo?.label.toLowerCase() || "valor"}</span>
+                        <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">top 10</span>
+                      </p>
+                      <div className="grid grid-cols-1 gap-1">
+                        {[...territorios]
+                          .sort((a, b) => (b.metricas[metricaAtiva] || 0) - (a.metricas[metricaAtiva] || 0))
+                          .slice(0, 10)
+                          .map((t, i) => {
+                            const valor = t.metricas[metricaAtiva] || 0
+                            const cor = corPorMetrica(valor, metricMax)
+                            return (
+                              <button
+                                key={t.id}
+                                onClick={() => setSelecionado(t)}
+                                className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-muted transition-all duration-200 cursor-pointer border border-transparent hover:border-slate-200 hover:scale-[1.01]"
+                              >
+                                <span className={`font-mono text-[10px] font-bold w-5 text-right shrink-0 ${i < 3 ? "text-amber-600" : "text-muted-foreground"}`}>
+                                  {i + 1}º
+                                </span>
+                                <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: cor }} />
+                                <span className="flex-1 truncate text-xs text-foreground/90 group-hover:text-foreground">{t.nome}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${(valor / metricMax) * 100}%`, backgroundColor: cor }} />
+                                  </div>
+                                  <span className="text-xs font-bold text-foreground min-w-[2ch] text-right">{valor}</span>
+                                </div>
+                              </button>
+                            )
+                          })}
                       </div>
                     </div>
                   )}
-                </>
-              )}
 
-              {/* Metrics summary */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="flex flex-col items-center rounded-xl bg-blue-50 border border-blue-100/80 p-3 hover:shadow-md hover:scale-[1.03] transition-all duration-200 cursor-default">
-                  <span className="text-lg font-bold text-blue-800">{municipiosConectados}</span>
-                  <span className="text-[9px] text-blue-600 font-semibold text-center leading-tight">Mun. Conectados</span>
-                </div>
-                <div className="flex flex-col items-center rounded-xl bg-green-50 border border-green-100/80 p-3 hover:shadow-md hover:scale-[1.03] transition-all duration-200 cursor-default">
-                  <span className="text-lg font-bold text-green-800">{installedTotal}</span>
-                  <span className="text-[9px] text-green-600 font-semibold text-center leading-tight">Pontos Instalados</span>
-                </div>
-                <div className="flex flex-col items-center rounded-xl bg-cyan-50 border border-cyan-100/80 p-3 hover:shadow-md hover:scale-[1.03] transition-all duration-200 cursor-default">
-                  <span className="text-lg font-bold text-cyan-800">{territorios.length}</span>
-                  <span className="text-[9px] text-cyan-600 font-semibold text-center leading-tight">Territórios</span>
-                </div>
-              </div>
-
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {modoCor === "territorio" ? "Territórios" : metricaLabel?.label}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  {modoCor === "territorio" ? "27 territórios de identidade" : `Total: ${territorios.reduce((s, t) => s + (t.metricas[metricaAtiva] || 0), 0)}`}
-                </p>
-              </div>
-
-              {modoCor === "territorio" ? (
-                <div className="grid grid-cols-1 gap-1">
-                  {territorios.map((t) => {
-                    const cor = TERRITORY_COLORS[t.id - 1] || "#e2e8f0"
-                    const isSelected = selecionado?.id === t.id
-                    const isFiltered = filterTerritory === t.nome
-                    const active = isSelected || isFiltered
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => { setSelecionado(t); setFilterTerritory("") }}
-                        className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all duration-200 cursor-pointer border
-                          ${active
-                            ? "bg-violet-50 border-violet-200 shadow-sm scale-[1.02]"
-                            : "hover:bg-slate-50 hover:border-slate-200 border-transparent hover:scale-[1.01] hover:shadow-sm"
-                          }`}
-                      >
-                        <div className="relative flex-shrink-0">
-                          <span className="block w-3 h-3 rounded-sm shadow-sm transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: cor }} />
-                          {active && (
-                            <span className="absolute -inset-1 rounded-sm ring-2 ring-violet-400/40 animate-pulse" style={{ borderColor: cor }} />
-                          )}
-                        </div>
-                        <span className="flex-1 truncate text-xs text-foreground/90 group-hover:text-foreground transition-colors">
-                          <span className="font-mono text-[10px] text-muted-foreground mr-1.5 group-hover:text-violet-500 transition-colors">{String(t.id).padStart(2, "0")}</span>
-                          {t.nome}
-                        </span>
-                        <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors bg-muted/50 group-hover:bg-violet-100/50 px-1.5 py-0.5 rounded-full">{t.municipios.length}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div>
-                    <div className="h-3 w-full rounded-full overflow-hidden border border-border" style={{ background: `linear-gradient(to right, rgb(238,47,90), rgb(178,147,40), rgb(78,207,100))` }} />
-                    <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
-                      <span>0</span>
-                      <span className="font-semibold text-foreground">{metricMax}</span>
+                  {/* Quick stats */}
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <div className="flex flex-col items-center rounded-xl bg-blue-50 border border-blue-100/80 p-3">
+                      <span className="text-lg font-bold text-blue-800">{municipiosConectados}</span>
+                      <span className="text-[9px] text-blue-600 font-semibold text-center leading-tight">Mun. Conectados</span>
+                    </div>
+                    <div className="flex flex-col items-center rounded-xl bg-green-50 border border-green-100/80 p-3">
+                      <span className="text-lg font-bold text-green-800">{installedTotal}</span>
+                      <span className="text-[9px] text-green-600 font-semibold text-center leading-tight">Pontos Instalados</span>
+                    </div>
+                    <div className="flex flex-col items-center rounded-xl bg-cyan-50 border border-cyan-100/80 p-3">
+                      <span className="text-lg font-bold text-cyan-800">{territorios.length}</span>
+                      <span className="text-[9px] text-cyan-600 font-semibold text-center leading-tight">Territórios</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-1">
-                    {[...territorios].sort((a, b) => (b.metricas[metricaAtiva] || 0) - (a.metricas[metricaAtiva] || 0)).slice(0, 10).map((t, i) => (
-                      <button key={t.id} onClick={() => setSelecionado(t)} className="group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left hover:bg-slate-50 transition-all duration-200 cursor-pointer border border-transparent hover:border-slate-200 hover:scale-[1.01]">
-                        <span className="font-mono text-[10px] font-bold text-muted-foreground w-4 text-right">{i + 1}</span>
-                        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: corPorMetrica(t.metricas[metricaAtiva] || 0, metricMax) }} />
-                        <span className="flex-1 truncate text-xs text-foreground group-hover:text-foreground transition-colors">{t.nome}</span>
-                        <span className="text-xs font-bold text-cyan-700 bg-cyan-50 px-1.5 py-0.5 rounded-full">{t.metricas[metricaAtiva] || 0}</span>
+                </div>
+              )}
+
+              {/* === ABA TERRITÓRIOS === */}
+              {abaSidebar === "territorios" && (
+                <div className="space-y-4">
+                  {/* Filters */}
+                  {conectaData && (
+                    <>
+                      <button
+                        onClick={() => setFiltersOpen(!filtersOpen)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-colors ${filtersOpen ? "bg-violet-50 text-violet-700 border border-violet-200" : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent"}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Filter size={14} />
+                          <span>{filtersOpen ? "Ocultar Filtros" : "Mostrar Filtros"}</span>
+                        </div>
+                        {filtersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </button>
-                    ))}
+
+                      {filtersOpen && (
+                        <div className="space-y-3">
+                          <div className="relative">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                              type="text"
+                              placeholder="Buscar município..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-xs outline-none focus:ring-2 focus:ring-cyan-500/50"
+                            />
+                          </div>
+
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowTerritoryDropdown(!showTerritoryDropdown)}
+                              className="w-full flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-xs text-left"
+                            >
+                              <span className={filterTerritory ? "text-foreground" : "text-muted-foreground"}>
+                                {filterTerritory || "Todos os territórios"}
+                              </span>
+                              <ChevronDown size={14} className={showTerritoryDropdown ? "rotate-180 transition-transform" : "transition-transform"} />
+                            </button>
+                            {showTerritoryDropdown && (
+                              <div className="absolute z-30 mt-1 w-full bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                <button
+                                  onClick={() => { setFilterTerritory(""); setShowTerritoryDropdown(false) }}
+                                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${!filterTerritory ? "bg-violet-50 text-violet-700 font-semibold" : ""}`}
+                                >
+                                  Todos os territórios
+                                </button>
+                                {allTerritories.map((t) => (
+                                  <button
+                                    key={t}
+                                    onClick={() => { setFilterTerritory(t); setShowTerritoryDropdown(false) }}
+                                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted flex items-center gap-2 ${filterTerritory === t ? "bg-violet-50 text-violet-700 font-semibold" : ""}`}
+                                  >
+                                    <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: territorioColorMap[t] || "#94A3B8" }} />
+                                    {t}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1.5">Modo de visualização</p>
+                            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+                              <button
+                                onClick={() => setFilterMode("instalado")}
+                                className={`px-3 py-1.5 text-[10px] font-medium transition-colors cursor-pointer ${filterMode === "instalado" ? "bg-cyan-600 text-white" : "text-muted-foreground hover:bg-muted"}`}
+                              >
+                                Instalados
+                              </button>
+                              <button
+                                onClick={() => setFilterMode("todos")}
+                                className={`px-3 py-1.5 text-[10px] font-medium transition-colors cursor-pointer ${filterMode === "todos" ? "bg-cyan-600 text-white" : "text-muted-foreground hover:bg-muted"}`}
+                              >
+                                Todos
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Quick stats */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col items-center rounded-xl bg-blue-50 border border-blue-100/80 p-3">
+                      <span className="text-lg font-bold text-blue-800">{municipiosConectados}</span>
+                      <span className="text-[9px] text-blue-600 font-semibold text-center leading-tight">Mun. Conectados</span>
+                    </div>
+                    <div className="flex flex-col items-center rounded-xl bg-green-50 border border-green-100/80 p-3">
+                      <span className="text-lg font-bold text-green-800">{installedTotal}</span>
+                      <span className="text-[9px] text-green-600 font-semibold text-center leading-tight">Pontos Instalados</span>
+                    </div>
+                    <div className="flex flex-col items-center rounded-xl bg-cyan-50 border border-cyan-100/80 p-3">
+                      <span className="text-lg font-bold text-cyan-800">{territorios.length}</span>
+                      <span className="text-[9px] text-cyan-600 font-semibold text-center leading-tight">Territórios</span>
+                    </div>
+                  </div>
+
+                  {/* Lista de territórios */}
+                  <div className="grid grid-cols-1 gap-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pb-1">
+                      {territorios.length} territórios de identidade
+                    </p>
+                    {territorios.map((t) => {
+                      const cor = TERRITORY_COLORS[t.id - 1] || "#e2e8f0"
+                      const isSelected = selecionado?.id === t.id
+                      const isFiltered = filterTerritory === t.nome
+                      const active = isSelected || isFiltered
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => { setSelecionado(t); setFilterTerritory("") }}
+                          className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all duration-200 cursor-pointer border
+                            ${active
+                              ? "bg-violet-50 border-violet-200 shadow-sm scale-[1.02]"
+                              : "hover:bg-slate-50 hover:border-slate-200 border-transparent hover:scale-[1.01] hover:shadow-sm"
+                            }`}
+                        >
+                          <div className="relative flex-shrink-0">
+                            <span className="block w-3 h-3 rounded-sm shadow-sm transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: cor }} />
+                            {active && (
+                              <span className="absolute -inset-1 rounded-sm ring-2 ring-violet-400/40 animate-pulse" style={{ borderColor: cor }} />
+                            )}
+                          </div>
+                          <span className="flex-1 truncate text-xs text-foreground/90 group-hover:text-foreground transition-colors">
+                            <span className="font-mono text-[10px] text-muted-foreground mr-1.5 group-hover:text-violet-500 transition-colors">{String(t.id).padStart(2, "0")}</span>
+                            {t.nome}
+                          </span>
+                          <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors bg-muted/50 group-hover:bg-violet-100/50 px-1.5 py-0.5 rounded-full">{t.municipios.length}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -729,12 +959,11 @@ export function MapaSection({
                     <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Indicadores</h4>
                       <div className="grid grid-cols-2 gap-2.5">
                         {METRICAS_DISPONIVEIS.map((m, i) => {
-                          const icons = [<Target size={15} key="total" />, <CheckCircle2 size={15} key="concluidos" />, <Clock size={15} key="andamento" />, <Wifi size={15} key="conecta" />, <Building2 size={15} key="instaladas" />]
                           const iconColors = ["text-indigo-500", "text-emerald-500", "text-amber-500", "text-sky-500", "text-violet-500"]
                           const bgColors = ["bg-indigo-50", "bg-emerald-50", "bg-amber-50", "bg-sky-50", "bg-violet-50"]
                           return (
                             <div key={m.key} className="flex items-center gap-3 rounded-xl border border-border bg-card/60 p-3 hover:shadow-md hover:border-slate-300/60 transition-all duration-200 cursor-default">
-                              <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${bgColors[i]} ${iconColors[i]}`}>{icons[i] || <LayoutGrid size={15} />}</span>
+                              <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${bgColors[i]} ${iconColors[i]}`}>{METRIC_ICON_MAP[m.icon]}</span>
                               <div className="min-w-0">
                                 <p className="text-lg font-bold text-foreground leading-none">{selecionado.metricas[m.key] || 0}</p>
                                 <p className="text-[10px] text-muted-foreground truncate mt-0.5">{m.label}</p>
@@ -830,7 +1059,7 @@ function MapaHeader() {
         </h2>
       </div>
       <p className="max-w-sm text-sm leading-relaxed text-muted-foreground md:text-base">
-        Clique em um município para ver detalhes Conecta. Use os filtros para encontrar municípios e territórios.
+        Clique em um município para ver detalhes. Use os indicadores para colorir o mapa por dados.
       </p>
     </header>
   )

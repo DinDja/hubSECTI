@@ -9,6 +9,7 @@ import { BackToTop } from "@/components/back-to-top"
 import { PageAccessLogger } from "@/components/page-access-logger"
 import { Chatbot } from "@/components/chatbot"
 import { MapaSectionLoader } from "@/components/mapa-section-loader"
+import { KnowledgeModal } from "@/components/knowledge-modal"
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
       <Footer />
       <BackToTop />
       <Chatbot />
+      <KnowledgeModal />
     </main>
   )
 }

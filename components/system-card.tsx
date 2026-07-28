@@ -138,7 +138,7 @@ export function SystemCard({ title, description, url, color, icon: Icon, index, 
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Preview */}
-        <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-muted">
+        <div className="relative aspect-[4/3] overflow-hidden border-b border-border bg-muted">
           {/* Loading state */}
           {isLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted pointer-events-none">

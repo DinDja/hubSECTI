@@ -21,6 +21,12 @@ import {
 } from "lucide-react"
 import { allEntries } from "@/lib/chatbot-knowledge"
 import territoriosData from "@/lib/territorioMunicipios.json"
+import {
+  dispatchFocusProjeto,
+  dispatchFocusSistema,
+  dispatchFocusMapaMunicipio,
+  dispatchOpenKnowledge,
+} from "@/lib/navigation-events"
 
 function safeStr(v: unknown): string {
   if (v == null) return ""
@@ -132,28 +138,58 @@ export function GlobalSearch() {
         title: safeStr(p.titulo) || "Sem título",
         description: descParts.join(" · ") || "Projeto SECTI",
         category: "projetos",
-        action: () => scrollTo("projetos"),
+        action: () => {
+          setOpen(false)
+          setTimeout(() => {
+            dispatchFocusProjeto(p.id || "")
+          }, 150)
+        },
         icon: <Target size={16} className="text-blue-500" />,
       })
     }
 
-    // Territories
+    // Territories / Municipalities → map
     for (const t of territoriosData.territorios_de_identidade) {
       const nome = t.nome.toLowerCase()
       const munMatch = t.municipios.filter((m) => m.toLowerCase().includes(q))
       if (!nome.includes(q) && munMatch.length === 0) continue
 
-      out.push({
-        id: `terr-${t.id}`,
-        title: nome.includes(q) ? t.nome : `${t.nome} (${munMatch.length} municípios)`,
-        description: `${t.quantidade_municipios || t.municipios.length} municípios`,
-        category: "territorios",
-        action: () => scrollTo("mapa"),
-        icon: <MapPin size={16} className="text-emerald-500" />,
-      })
+      // If the query matches a specific municipality, go directly to it
+      if (munMatch.length === 1) {
+        const mun = munMatch[0]
+        out.push({
+          id: `mun-${t.id}-${mun}`,
+          title: mun,
+          description: `${t.nome} · ${t.quantidade_municipios || t.municipios.length} municípios`,
+          category: "territorios",
+          action: () => {
+            setOpen(false)
+            setTimeout(() => dispatchFocusMapaMunicipio(mun), 150)
+          },
+          icon: <MapPin size={16} className="text-emerald-500" />,
+        })
+      } else {
+        out.push({
+          id: `terr-${t.id}`,
+          title: nome.includes(q) ? t.nome : `${t.nome} (${munMatch.length} municípios)`,
+          description: `${t.quantidade_municipios || t.municipios.length} municípios`,
+          category: "territorios",
+          action: () => {
+            setOpen(false)
+            setTimeout(() => {
+              if (munMatch.length > 0) {
+                dispatchFocusMapaMunicipio(munMatch[0])
+              } else {
+                scrollTo("mapa")
+              }
+            }, 150)
+          },
+          icon: <MapPin size={16} className="text-emerald-500" />,
+        })
+      }
     }
 
-    // Systems
+    // Systems → filter on systems section
     const systems = allEntries.filter((e) => e.category === "sistemas")
     for (const s of systems) {
       const kwMatch = s.keywords.some((kw) => kw.includes(q))
@@ -163,12 +199,15 @@ export function GlobalSearch() {
         title: s.title,
         description: s.content.substring(0, 100),
         category: "sistemas",
-        action: () => scrollTo("sistemas"),
+        action: () => {
+          setOpen(false)
+          setTimeout(() => dispatchFocusSistema(s.title), 150)
+        },
         icon: <LayoutGrid size={16} className="text-purple-500" />,
       })
     }
 
-    // Knowledge
+    // Knowledge → open modal
     for (const e of allEntries) {
       if (e.category === "sistemas") continue
       const kwMatch = e.keywords.some((kw) => kw.includes(q))
@@ -180,7 +219,7 @@ export function GlobalSearch() {
         category: "conhecimento",
         action: () => {
           setOpen(false)
-          if (e.links?.[0]?.url) window.open(e.links[0].url, "_blank")
+          setTimeout(() => dispatchOpenKnowledge(e.id), 150)
         },
         icon: <Lightbulb size={16} className="text-amber-500" />,
       })
@@ -213,7 +252,7 @@ export function GlobalSearch() {
 
   const categoryLabels: Record<string, string> = {
     projetos: "Projetos",
-    territorios: "Territórios",
+    territorios: "Municípios / Territórios",
     sistemas: "Sistemas",
     noticias: "Notícias",
     conhecimento: "Conhecimento",
@@ -290,6 +329,7 @@ export function GlobalSearch() {
                       <p className="text-[11px] text-muted-foreground truncate">{item.description}</p>
                     </div>
                     {item.category === "noticias" && <ExternalLink size={12} className="shrink-0 text-muted-foreground/40" />}
+                    {item.category === "conhecimento" && <Lightbulb size={12} className="shrink-0 text-amber-400/60" />}
                   </CommandItem>
                 ))}
               </CommandGroup>

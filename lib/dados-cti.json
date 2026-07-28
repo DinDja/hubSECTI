@@ -1,0 +1,875 @@
+{
+  "generatedAt": "2026-07-27T18:32:12.210Z",
+  "totalTerritories": 28,
+  "totalEntities": 67,
+  "counts": {
+    "Bacia do Jacuípe": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Bacia do Paramirim": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Rio Corrente": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Bacia do Rio Grande": {
+      "icts": 0,
+      "centrosPesquisa": 1,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 2
+    },
+    "Baixo Sul": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Chapada Diamantina": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Costa do Descobrimento": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Extremo Sul": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Irecê": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 2,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Itaparica": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Litoral Norte e Agreste Baiano": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Litoral Sul": {
+      "icts": 0,
+      "centrosPesquisa": 1,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 1,
+      "incubadorasAceleradoras": 4
+    },
+    "Médio Rio de Contas": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Médio Sudoeste da Bahia": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Metropolitano de Salvador": {
+      "icts": 1,
+      "centrosPesquisa": 2,
+      "espacoDinamizadoress": 4,
+      "parquesTecnologicos": 1,
+      "incubadorasAceleradoras": 17
+    },
+    "Piemonte da Diamantina": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Piemonte do Paraguaçu": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Piemonte Norte do Itapicuru": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Portal do Sertão": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 2
+    },
+    "Portão do Sertão": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Recôncavo": {
+      "icts": 1,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 4,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 2
+    },
+    "Semiárido Nordeste II": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Sertão do São Francisco": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 2,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 1
+    },
+    "Sertão Produtivo": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 2,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Sisal": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Sudoeste Baiano": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 2,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 3
+    },
+    "Vale do Jiquiriçá": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 1,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    },
+    "Velho Chico": {
+      "icts": 0,
+      "centrosPesquisa": 0,
+      "espacoDinamizadoress": 0,
+      "parquesTecnologicos": 0,
+      "incubadorasAceleradoras": 0
+    }
+  },
+  "entities": [
+    {
+      "municipio": "Barreiras",
+      "entidade": "Espaço Colaborar Parceiro do IFBA Barreiras",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Bacia do Rio Grande"
+    },
+    {
+      "municipio": "Barreiras",
+      "entidade": "Incubadora de Base Tecnológica da UFOB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Bacia do Rio Grande"
+    },
+    {
+      "municipio": "Barreiras",
+      "entidade": "Instituto da Associação de Agricultores e Irrigantes da Bahia",
+      "categoria": "centrosPesquisa",
+      "tipo": "Entidade de Pesquisa",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Bacia do Rio Grande"
+    },
+    {
+      "municipio": "Luís Eduardo Magalhães",
+      "entidade": "Cyklo Agritech",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Agronegócio e Agtechs (Hardware e Software para o campo)",
+      "site": "https://cykloagritech.com.br/",
+      "territorio": "Bacia do Rio Grande"
+    },
+    {
+      "municipio": "Valença",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Valença",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Baixo Sul"
+    },
+    {
+      "municipio": "Teixeira de Freitas",
+      "entidade": "Espaço Colaborar Parceiro da UFSB Teixeira de Freitas",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Extremo Sul"
+    },
+    {
+      "municipio": "Irecê",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Irecê",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Irecê"
+    },
+    {
+      "municipio": "Mulungu do Morro",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Mulungu do Morro",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Irecê"
+    },
+    {
+      "municipio": "Alagoinhas",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Alagoinhas",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Norte e Agreste Baiano"
+    },
+    {
+      "municipio": "Ilhéus",
+      "entidade": "Espaço Colaborar Parceiro da UESC",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Ilhéus",
+      "entidade": "Broto Incubadora de Biotecnologia da UESC",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Itabuna",
+      "entidade": "Incubadora de Empresas de Base Científica e Tecnológica da UFSB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Itabuna",
+      "entidade": "Incubadora de Tecnologias Sociais e Economia Solidária do Sul e Extremo Sul da Bahia da UFSB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Uruçuca",
+      "entidade": "Pré-Incubadora Tecnológica do IFBaiano",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Ilhéus",
+      "entidade": "Comissão Executiva do Plano da Lavoura Cacaueira da Bahia",
+      "categoria": "centrosPesquisa",
+      "tipo": "Entidade de Pesquisa",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Ilhéus",
+      "entidade": "Parque Científico e Tecnológico do Sul da Bahia",
+      "categoria": "parquesTecnologicos",
+      "tipo": "Parque Tecnológico",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Litoral Sul"
+    },
+    {
+      "municipio": "Jequié",
+      "entidade": "Espaço Colaborar Parceiro da UESB Jequié",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Médio Rio de Contas"
+    },
+    {
+      "municipio": "Itapetinga",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Itapetinga",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Médio Sudoeste da Bahia"
+    },
+    {
+      "municipio": "Camaçari",
+      "entidade": "Centro de Pesquisas e Desenvolvimento",
+      "categoria": "centrosPesquisa",
+      "tipo": "Entidade de Pesquisa",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Instituto Baiano de Tecnologia das Águas",
+      "categoria": "centrosPesquisa",
+      "tipo": "Entidade de Pesquisa",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Fundação Oswaldo Cruz - Instituto Gonçalo Moniz",
+      "categoria": "icts",
+      "tipo": "ICT",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Camaçari",
+      "entidade": "Espaço Fazer Parceiro do IFBA Camaçari",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Camaçari",
+      "entidade": "Espaço Fazer Parceiro da Prefeitura Municipal de Camaçari",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Itaparica",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Itaparica",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Espaço Colaborar Parceiro da Secretaria de Cultura do Estado da Bahia",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Parque Tecnológico da Bahia",
+      "categoria": "parquesTecnologicos",
+      "tipo": "Parque Tecnológico",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora de Empresas de Base Tecnológica do Estado da Bahia",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Camaçari",
+      "entidade": "Incubadora de Empresas de Base Tecnológica do CEPED",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora de Empresas de Base Tecnológica da Escola Politécnica da UFBA",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora Tecnológica de Economia Solidária e Gestão do Desenvolvimento Territorial da UFBA",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora Tecnológica de Cooperativas Populares da UNEB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora Tecnológica de Cooperativas Populares do IFBA",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Pré-Incubadora Tecnológica do IFBA",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora de Empreendimentos e Redes de Economia Solidária",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Centro de Empreendedorismo e Inovação da UNIFACS",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora Tecnológica de Cooperativas Populares da UCSal",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Incubadora de Base Tecnológica do SENAI CIMATEC",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "GetIN Aceleradora",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Tecnologia e Modelagem de Negócios (SaaS, B2B)",
+      "site": "https://getin.inf.br/",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "SENAI CIMATEC",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Deeptechs, Biotecnologia, Hardware e Tecnologia Industrial",
+      "site": "https://senaicimatec.com.br/",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Camaçari",
+      "entidade": "CIMATEC Park",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Deeptechs, Biotecnologia, Hardware e Tecnologia Industrial",
+      "site": "https://senaicimatec.com.br/",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Áity Incubadora (Uneb/Sebrae)",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Base tecnológica e transição para o mercado corporativo",
+      "site": "https://inovacao.uneb.br/aity-incubadora-de-empresas-ja-ouviu-falar/",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Vale do dendê",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Economia criativa, negócios periféricos, tecnologia e inovação com forte pilar de diversidade (focada principalmente em empreendedores negros e periféricos).",
+      "site": "https://www.valedodende.org/",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Salvador",
+      "entidade": "Inventivos",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Plataforma de formação, mentoria e aceleração de negócios, fundada por Monique Evelle.",
+      "site": "https://inventivos.co/",
+      "territorio": "Metropolitano de Salvador"
+    },
+    {
+      "municipio": "Jacobina",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Jacobina",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Piemonte da Diamantina"
+    },
+    {
+      "municipio": "Piritiba",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Piritiba",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Piemonte do Paraguaçu"
+    },
+    {
+      "municipio": "Feira de Santana",
+      "entidade": "Espaço Colaborar Parceiro da UFRB Feira de Santana",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Portal do Sertão"
+    },
+    {
+      "municipio": "Feira de Santana",
+      "entidade": "Incubadora de Empresas de Base Tecnológica das Engenharias da UEFS",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Portal do Sertão"
+    },
+    {
+      "municipio": "Feira de Santana",
+      "entidade": "Novatores",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Capitaneado pela Universidade Estadual de Feira de Santana (UEFS) para acelerar ideias inovadoras no portal do sertão baiano.",
+      "site": "https://novatores.uefs.br/",
+      "territorio": "Portal do Sertão"
+    },
+    {
+      "municipio": "Cruz das Almas",
+      "entidade": "Empresa Brasileira de Pesquisa Agropecuária - Mandioca e Fruticultura",
+      "categoria": "icts",
+      "tipo": "ICT",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Cachoeira",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Cachoeira",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Castro Alves",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Castro Alves",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Cruz das Almas",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Cruz das Almas",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Santo Antônio de Jesus",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Santo Antônio de Jesus",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Cruz das Almas",
+      "entidade": "Incubadora de Empresas de Base Tecnológica do Recôncavo da UFRB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Cruz das Almas",
+      "entidade": "Incubadora de Empreendimentos Econômicos Solidários da UFRB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Recôncavo"
+    },
+    {
+      "municipio": "Juazeiro",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Juazeiro",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sertão do São Francisco"
+    },
+    {
+      "municipio": "Juazeiro",
+      "entidade": "Espaço Colaborar Parceiro da UNEB Juazeiro",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sertão do São Francisco"
+    },
+    {
+      "municipio": "Juazeiro",
+      "entidade": "Incubadora Tecnológica da UNIVASF",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sertão do São Francisco"
+    },
+    {
+      "municipio": "Brumado",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Brumado",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sertão Produtivo"
+    },
+    {
+      "municipio": "Caetité",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Caetité",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sertão Produtivo"
+    },
+    {
+      "municipio": "Araci",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Araci",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sisal"
+    },
+    {
+      "municipio": "Vitória da Conquista",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Vitória da Conquista",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sudoeste Baiano"
+    },
+    {
+      "municipio": "Vitória da Conquista",
+      "entidade": "Espaço Colaborar Parceiro do IFBA Vitória da Conquista",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sudoeste Baiano"
+    },
+    {
+      "municipio": "Vitória da Conquista",
+      "entidade": "IIncubadora de Empresas da UESB",
+      "categoria": "incubadoras",
+      "tipo": "Incubadora",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Sudoeste Baiano"
+    },
+    {
+      "municipio": "Vitória da Conquista",
+      "entidade": "IEBT Innovation",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Viabiliza programas de inovação aberta, conexão corporativa e aceleração focada em editais como o Tecnova no estado",
+      "site": "https://www.iebtinnovation.com/",
+      "territorio": "Sudoeste Baiano"
+    },
+    {
+      "municipio": "Vitória da Conquista",
+      "entidade": "Hub Conquista / Conquista Startups",
+      "categoria": "aceleradoras",
+      "tipo": "Aceleradoras",
+      "quantidade": 1,
+      "descricao": "Programa de aceleração do ecossistema do Sudoeste, operado em conjunto com a aceleradora de abrangência nacional IEBT.",
+      "site": "https://hubconquista.com.br/",
+      "territorio": "Sudoeste Baiano"
+    },
+    {
+      "municipio": "Amargosa",
+      "entidade": "Espaço Colaborar Parceiro da Prefeitura Municipal de Amargosa",
+      "categoria": "espacoDinamizadoress",
+      "tipo": "Espaço Dinamizador",
+      "quantidade": 1,
+      "descricao": "",
+      "site": "",
+      "territorio": "Vale do Jiquiriçá"
+    }
+  ]
+}

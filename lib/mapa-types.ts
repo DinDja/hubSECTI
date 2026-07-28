@@ -5,6 +5,11 @@ export type MetricKey =
   | "municipiosConectados"
   | "totalMunicipios"
   | "installedPoints"
+  | "icts"
+  | "centrosPesquisa"
+  | "espacoDinamizadoress"
+  | "parquesTecnologicos"
+  | "incubadorasAceleradoras"
 
 export type MunicipioRender = {
   nome: string

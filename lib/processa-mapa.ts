@@ -102,6 +102,11 @@ export async function carregarMapa(
         projetosConcluidos: ext.projetosConcluidos ?? 0,
         projetosAndamento: ext.projetosAndamento ?? 0,
         installedPoints: ext.installedPoints ?? 0,
+        icts: ext.icts ?? 0,
+        centrosPesquisa: ext.centrosPesquisa ?? 0,
+        espacoDinamizadoress: ext.espacoDinamizadoress ?? 0,
+        parquesTecnologicos: ext.parquesTecnologicos ?? 0,
+        incubadorasAceleradoras: ext.incubadorasAceleradoras ?? 0,
       },
     }
   })

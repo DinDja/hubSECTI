@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search } from "lucide-react"
 import { SystemCard } from "./system-card"
 import {
@@ -148,6 +148,20 @@ const categoryLabels: Record<string, string> = Object.fromEntries(
 export function SystemsSection() {
   const [activeCategory, setActiveCategory] = useState("todos")
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { systemTitle: string }
+      if (!detail?.systemTitle) return
+      setSearchQuery(detail.systemTitle)
+      setActiveCategory("todos")
+      setTimeout(() => {
+        document.getElementById("sistemas")?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 100)
+    }
+    window.addEventListener("nav:focus-sistema", handler)
+    return () => window.removeEventListener("nav:focus-sistema", handler)
+  }, [])
 
   const filteredSystems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()

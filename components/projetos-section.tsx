@@ -128,6 +128,21 @@ export function ProjetosSection() {
 
   useEffect(() => { loadProjetos() }, [loadProjetos])
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { projetoId: string }
+      if (!detail?.projetoId) return
+      const projeto = allProjetos.find((p) => p.id === detail.projetoId)
+      if (!projeto) return
+      setSelectedId(detail.projetoId)
+      setTimeout(() => {
+        document.getElementById("projetos")?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 100)
+    }
+    window.addEventListener("nav:focus-projeto", handler)
+    return () => window.removeEventListener("nav:focus-projeto", handler)
+  }, [allProjetos])
+
   const statusOptions = useMemo(() => {
     const set = new Set<string>()
     allProjetos.forEach((p) => { if (p.status) set.add(p.status) })
@@ -277,7 +292,7 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Preview */}
-      <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-gradient-to-br from-cyan-50 to-blue-50">
+      <div className="relative aspect-[4/3] overflow-hidden border-b border-border bg-gradient-to-br from-cyan-50 to-blue-50">
         {hasFoto ? (
           <img
             src={fotoUrl}

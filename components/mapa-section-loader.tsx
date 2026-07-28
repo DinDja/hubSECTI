@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { MapaSection } from "@/components/mapa-section"
 import { agregarMetricasTerritorios, type MetricasExternas } from "@/lib/agregar-metricas"
+import { agregarCtiTerritorios } from "@/lib/agregar-cti"
 import type { ConectaData } from "@/lib/mapa-types"
 import { simplifyMunicipioName } from "@/lib/conecta-coverage"
 import { CONECTA_REFERENCE_TOTALS } from "@/lib/conecta-reference"
@@ -133,6 +134,13 @@ export function MapaSectionLoader() {
       if (conectaData) {
         setConecta(conectaData)
         metricasExternas = agregarConectaTerritorios(conectaData, metricasExternas)
+      }
+
+      // Merge CTI data (ICTs, Centros de Pesquisa, etc.)
+      const cti = agregarCtiTerritorios()
+      for (const [key, vals] of Object.entries(cti)) {
+        if (!metricasExternas[key]) metricasExternas[key] = {}
+        Object.assign(metricasExternas[key], vals)
       }
 
       if (Object.keys(metricasExternas).length > 0) {
