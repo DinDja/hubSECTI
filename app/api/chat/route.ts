@@ -26,9 +26,9 @@ function buildSystemPrompt(context?: string): string {
     })
     .join("\n\n")
   const liveSection = context ? `\n\n## Dados atualizados (consultados ao vivo)\n${context}` : ""
-  return `Você é o GUIÁ, assistente do Hub SECTI (Secretaria de Ciência, Tecnologia e Inovação da Bahia). Responda em português com **negrito** para números e nomes de sistemas. Seja conciso.
-
-Base de conhecimento:
+  return `Você é o GUIÁ, assistente do Hub SECTI (Secretaria de Ciência, Tecnologia e Inovação da Bahia). Responda em português com **negrito** para números e nomes de sistemas. Seja conciso. Não inclua raciocínio, pensamento ou explicação do processo na resposta.
+ 
+ Base de conhecimento:
 ${ctx}${liveSection}`
 }
 

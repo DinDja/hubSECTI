@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 import { ArrowDown, ExternalLink } from "lucide-react"
 import { HeroGuiaAnimation } from "@/components/hero-guia-animation"
 
@@ -64,23 +64,89 @@ const TIMELINE_EVENTS: TimelineEvent[] = [
 ]
 
 const FRUIT_COLORS = [
-  "#8CC63F", // Verde
-  "#00BFB3", // Teal
-  "#EC008C", // Rosa
-  "#F7941D", // Laranja
-  "#0066B3", // Azul
-  "#FFC20E", // Amarelo
+  "#8CC63F",
+  "#00BFB3",
+  "#EC008C",
+  "#F7941D",
+  "#0066B3",
+  "#FFC20E",
 ]
 
-// Posições dos frutos na SVG da árvore
 const FRUIT_POSITIONS = [
-  { x: 138, y: 78 },   // Fruto 1 - Verde superior esquerdo
-  { x: 346, y: 78 },   // Fruto 2 - Teal superior direito
-  { x: 104, y: 214 },  // Fruto 3 - Rosa meio esquerdo
-  { x: 332, y: 220 },  // Fruto 4 - Laranja meio direito
-  { x: 200, y: 306 },  // Fruto 5 - Azul centro
-  { x: 390, y: 286 },  // Fruto 6 - Amarelo direita
+  { x: 138, y: 78 },
+  { x: 346, y: 78 },
+  { x: 104, y: 214 },
+  { x: 332, y: 220 },
+  { x: 200, y: 306 },
+  { x: 390, y: 286 },
 ]
+
+interface Leaf {
+  id: number
+  x: number
+  delay: number
+  duration: number
+  size: number
+  drift: number
+  color: string
+  rotationStart: number
+  rotationEnd: number
+}
+
+function FallingLeaves({ active }: { active: boolean }) {
+  const leaves = useMemo<Leaf[]>(() => {
+    const colors = ["#8CC63F", "#00BFB3", "#EC008C", "#F7941D", "#0066B3", "#FFC20E"]
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: 80 + Math.random() * 340,
+      delay: Math.random() * 3.5,
+      duration: 2 + Math.random() * 2.5,
+      size: 4 + Math.random() * 5,
+      drift: -40 + Math.random() * 80,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotationStart: Math.random() * 360,
+      rotationEnd: Math.random() * 720 - 360,
+    }))
+  }, [])
+
+  if (!active) return null
+
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      {leaves.map((leaf) => (
+        <g key={leaf.id}>
+          <style>{`
+            @keyframes fall-leaf-${leaf.id} {
+              0% {
+                transform: translate(${leaf.x}px, 20px) rotate(${leaf.rotationStart}deg);
+                opacity: 0;
+              }
+              8% {
+                opacity: 0.85;
+              }
+              85% {
+                opacity: 0.6;
+              }
+              100% {
+                transform: translate(${leaf.x + leaf.drift}px, 510px) rotate(${leaf.rotationEnd}deg);
+                opacity: 0;
+              }
+            }
+            .leaf-${leaf.id} {
+              animation: fall-leaf-${leaf.id} ${leaf.duration}s ease-in-out ${leaf.delay}s forwards;
+            }
+          `}</style>
+          <path
+            className={`leaf-${leaf.id}`}
+            d="M0,-5 Q3,0 0,5 Q-3,0 0,-5"
+            fill={leaf.color}
+            opacity="0"
+          />
+        </g>
+      ))}
+    </g>
+  )
+}
 
 function TechTree({ events, hoveredFruit, setHoveredFruit }: { 
   events: TimelineEvent[]
@@ -88,11 +154,18 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
   setHoveredFruit: (index: number | null) => void 
 }) {
   const [tooltipCoords, setTooltipCoords] = useState<{ x: number; y: number } | null>(null)
+  const [animationActive, setAnimationActive] = useState(false)
   const treeRef = useRef<HTMLDivElement>(null)
 
-  const handleFruitHover = (index: number) => {
-    setHoveredFruit(index)
-  }
+  useEffect(() => {
+    // Inicia vento + folhas ao montar
+    setAnimationActive(true)
+    // Para tudo após 5s
+    const timer = setTimeout(() => setAnimationActive(false), 5000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleFruitHover = (index: number) => setHoveredFruit(index)
 
   const handleFruitMove = (event: React.MouseEvent<SVGGElement>, index: number) => {
     handleFruitHover(index)
@@ -111,6 +184,24 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
 
   return (
     <div ref={treeRef} className="relative flex h-full w-full items-center justify-center lg:justify-end overflow-visible">
+      <style>{`
+        @keyframes gentleWind {
+          0%, 100% { transform: rotate(0deg) skewX(0deg); }
+          20% { transform: rotate(0.6deg) skewX(0.4deg); }
+          40% { transform: rotate(-0.4deg) skewX(-0.3deg); }
+          60% { transform: rotate(0.5deg) skewX(0.5deg); }
+          80% { transform: rotate(-0.2deg) skewX(-0.1deg); }
+        }
+        .tree-wind {
+          transform-origin: 250px 520px;
+          animation: gentleWind 6s ease-in-out infinite;
+        }
+        .tree-settle {
+          transform-origin: 250px 520px;
+          transition: transform 1.2s ease-out;
+        }
+      `}</style>
+
       <svg
         viewBox="0 0 494 522"
         className="h-full w-auto max-w-full"
@@ -121,16 +212,23 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
           filter: "drop-shadow(0 25px 50px rgba(0, 102, 179, 0.15))",
         }}
       >
-        <image
-          href="/tree.svg"
-          x="0"
-          y="0"
-          width="494"
-          height="522"
-          preserveAspectRatio="xMidYMid meet"
-          style={{ pointerEvents: "none" }}
-        />
+        {/* Árvore com vento condicional */}
+        <g className={animationActive ? "tree-wind" : "tree-settle"}>
+          <image
+            href="/tree.svg"
+            x="0"
+            y="0"
+            width="494"
+            height="522"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ pointerEvents: "none" }}
+          />
+        </g>
 
+        {/* Folhas caindo — 5s apenas */}
+        <FallingLeaves active={animationActive} />
+
+        {/* Frutos interativos */}
         {events.map((event, i) => {
           const pos = FRUIT_POSITIONS[i]
           const isHovered = hoveredFruit === i
@@ -145,7 +243,6 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
               onClick={() => window.open(event.href, "_blank")}
               style={{ pointerEvents: "auto", cursor: "pointer" }}
             >
-              {/* Glow ao fazer hover */}
               {isHovered && (
                 <circle
                   cx={pos.x}
@@ -158,7 +255,6 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
                 />
               )}
 
-              {/* Fruto principal */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -172,7 +268,6 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
                 }}
               />
 
-              {/* Brilho no fruto */}
               <circle
                 cx={pos.x - 5}
                 cy={pos.y - 5}
@@ -216,13 +311,13 @@ function TechTree({ events, hoveredFruit, setHoveredFruit }: {
   )
 }
 
-function FruitTooltip({ event, color, index }: { event: TimelineEvent; color: string; index: number }) {
+function FruitTooltip({ event, color }: { event: TimelineEvent; color: string }) {
   return (
     <a
       href={event.href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block p-4 bg-white border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-lg"
+      className="group block p-4 bg-white border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-lg relative overflow-hidden"
     >
       <div 
         className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2"
@@ -246,8 +341,6 @@ function FruitTooltip({ event, color, index }: { event: TimelineEvent; color: st
     </a>
   )
 }
-
-
 
 export function Hero() {
   const [isVisible, setIsVisible] = useState(false)
@@ -282,10 +375,8 @@ export function Hero() {
     >
       <HeroGuiaAnimation />
 
-      {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-[#FAFAFA] pointer-events-none" />
       
-      {/* Elegant color bar at top */}
       <div className="relative z-20 flex h-1">
         <div className="flex-1 bg-[#8CC63F]" />
         <div className="flex-1 bg-[#00BFB3]" />
@@ -296,9 +387,7 @@ export function Hero() {
         <div className="flex-1 bg-[#FFC20E]" />
       </div>
 
-      {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Large typography background */}
         <div 
           className="absolute -right-0 top-1/2 -translate-y-1/2 text-[20vw] font-black text-gray-100/50 leading-none tracking-tighter select-none"
           style={{ transform: `translateY(calc(-50% + ${parallaxOffset}px))` }}
@@ -307,13 +396,10 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Main content */}
       <div className="relative z-10 flex-1 flex items-start">
         <div className="w-full max-w-[1680px] mx-auto px-6 md:px-12 lg:px-20 ">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr]  items-center">
-            {/* Left column - Text */}
+          <div className="grid lg:grid-cols-[1.05fr_0.95fr] items-center">
             <div className="min-w-0 lg:self-center">
-              {/* Eyebrow */}
               <div 
                 className={`flex items-center gap-3 mb-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               >
@@ -334,7 +420,6 @@ export function Hero() {
                 </span>
               </div>
 
-              {/* Main heading */}
               <h1 
                 className={`mb-8 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
@@ -346,7 +431,6 @@ export function Hero() {
                 </span>
               </h1>
 
-              {/* Description */}
               <p 
                 className={`text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed mb-10 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
@@ -354,7 +438,6 @@ export function Hero() {
                 <span className="font-semibold text-gray-900"> Secretaria de Ciência, Tecnologia e Inovação</span>.
               </p>
 
-              {/* CTAs */}
               <div 
                 className={`flex flex-wrap gap-4 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               >
@@ -378,12 +461,10 @@ export function Hero() {
               </div>
             </div>
 
-            {/* Right column - Tech Tree */}
             <div 
               className={`relative min-w-0 flex justify-center lg:justify-end lg:self-center transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
             >
               <div className="relative">
-                {/* Tree visualization */}
                 <div className="relative h-[660px] md:h-[780px] lg:h-[880px] xl:h-[960px] w-full max-w-[860px] overflow-visible">
                   <TechTree 
                     events={TIMELINE_EVENTS} 
@@ -391,7 +472,6 @@ export function Hero() {
                     setHoveredFruit={setHoveredFruit}
                   />
 
-                  {/* Legend */}
                   <div className={`absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs text-gray-400 shadow-lg transition-all duration-500 backdrop-blur-sm ${
                     hoveredFruit === null ? 'opacity-100' : 'opacity-0'
                   }`}>
@@ -407,7 +487,6 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Bottom section */}
       <div className="relative z-10 border-t border-gray-100">
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-20">
           <div className="flex items-center justify-between py-6">
@@ -438,7 +517,6 @@ export function Hero() {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
-
         .animate-marquee {
           animation: marquee 24s linear infinite;
         }

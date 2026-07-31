@@ -91,6 +91,20 @@
   }
 }
 
+/* Chat scrollbar */
+.flex-1.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+.flex-1.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
 /* Custom animations */
 @keyframes fade-in {
   from {
