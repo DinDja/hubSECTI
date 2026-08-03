@@ -44,6 +44,16 @@ type ApiResposta = {
 const COLORS = { cyan: "#00B5AD", green: "#7AC143", blue: "#0077C0", orange: "#F7941D", yellow: "#FDB913" }
 
 const formatter = new Intl.NumberFormat("pt-BR")
+
+function parseBeneficiarios(valor: string | number | undefined | null): number | null {
+  if (valor === undefined || valor === null || valor === "") return null
+  if (typeof valor === "number") return Number.isFinite(valor) ? valor : null
+  const str = String(valor).trim()
+  if (!str) return null
+  const num = Number(str.replace(/\./g, "").replace(",", "."))
+  return Number.isFinite(num) ? num : null
+}
+
 const CACHE_KEY = "projetos-all-v1"
 const CACHE_TTL_MS = 30 * 60 * 1000
 const DETAILS_CACHE_PREFIX = "projeto-detail-v1"
@@ -397,11 +407,15 @@ function ProjetoCard({ projeto: p, index }: { projeto: Projeto; index: number })
         {/* Bottom row: tags + action */}
         <div className="mt-4 flex items-center justify-between gap-3">
           <div className="flex flex-wrap gap-1.5">
-            {p.nmrBeneficiarios != null && p.nmrBeneficiarios !== "" && (
-              <span className="rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `${COLORS.orange}15`, color: COLORS.orange }}>
-                {formatter.format(Number(p.nmrBeneficiarios))} benef.
-              </span>
-            )}
+            {(() => {
+              const n = parseBeneficiarios(p.nmrBeneficiarios)
+              if (n === null) return null
+              return (
+                <span className="rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `${COLORS.orange}15`, color: COLORS.orange }}>
+                  {formatter.format(n)} benef.
+                </span>
+              )
+            })()}
             {p.investimentoReal && (
               <span className="rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ backgroundColor: `${COLORS.green}15`, color: COLORS.green }}>
                 Investimento

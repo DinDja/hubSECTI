@@ -191,9 +191,9 @@ export function Header() {
               onClick={() => { setIsMenuOpen(false); window.dispatchEvent(new CustomEvent("open-global-search")) }}
               className="flex items-center gap-4 px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 transition-colors group"
             >
-              <Search size={18} className="text-muted-foreground" />
-              <span className="text-lg font-medium text-muted-foreground">Buscar...</span>
-              <kbd className="ml-auto text-[10px] font-mono text-muted-foreground/60 px-1.5 py-0.5 rounded border">⌘K</kbd>
+              <Search size={18} className="text-[#0077C0]" />
+              <span className="text-lg font-medium text-foreground/80">Buscar...</span>
+              <kbd className="ml-auto text-[10px] font-mono text-foreground/50 px-1.5 py-0.5 rounded border border-border bg-background">⌘K</kbd>
             </button>
 
             <div className="h-px bg-border my-2" />

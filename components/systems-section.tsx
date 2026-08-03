@@ -94,7 +94,8 @@ const systems = [
   {
     title: "Espaços Dinamizadores",
     description: "Plataforma para fomentar a colaboração e o intercâmbio de ideias entre os atores do ecossistema de inovação.",
-    url: "http://espacodinamizador.secti.ba.gov.br/",
+    url: "https://espacodinamizador.secti.ba.gov.br/",
+    image: "/previews/espacos-dinamizadores.png",
     icon: Users,
     color: colors.red,
     category: "comunicacao",

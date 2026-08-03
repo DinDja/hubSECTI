@@ -273,12 +273,12 @@ export function GlobalSearch() {
           fetchedRef.current = false
           setOpen(true)
         }}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-md border border-border bg-background shadow-sm hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        className="group flex items-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all duration-300 hover:border-[#00B5AD]/70 hover:bg-[#00B5AD]/[0.06] hover:shadow-[0_2px_12px_rgba(0,181,173,0.15)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00B5AD]"
         title="Busca global (Ctrl+K)"
       >
-        <Search size={16} />
-        <span className="hidden lg:inline">Buscar...</span>
-        <kbd className="hidden md:inline-flex ml-2 items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono rounded border bg-muted text-muted-foreground">
+        <Search size={16} className="text-[#0077C0] transition-colors group-hover:text-[#00B5AD]" />
+        <span className="hidden lg:inline text-foreground/85 group-hover:text-foreground">Buscar...</span>
+        <kbd className="hidden md:inline-flex ml-1 items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground/60 group-hover:text-foreground/80">
           <span className="text-[9px]">⌘</span>K
         </kbd>
       </button>
